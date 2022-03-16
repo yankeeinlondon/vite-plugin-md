@@ -4,7 +4,6 @@ import { ref } from 'vue'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { Window } from 'happy-dom'
 import { composeSfcBlocks } from '../src/pipeline'
-import { resolveOptions } from '../src/options'
 import { link } from '../src/index'
 
 const window = new Window()
@@ -18,7 +17,7 @@ describe('link testing', () => {
   })
 
   it('internal and external classes are brought in appropriately', () => {
-    const sfc = composeSfcBlocks('', md, resolveOptions({ linkTransforms: link() }))
+    const sfc = composeSfcBlocks('', md, { linkTransforms: link() })
     document.body.innerHTML = sfc.html
     const internalLinks = document.querySelectorAll('.internal-link')
     const externalLinks = document.querySelectorAll('.external-link')
@@ -49,11 +48,11 @@ describe('link testing', () => {
   })
 
   it('custom rules add classes as expected', () => {
-    const sfc = composeSfcBlocks('', md, resolveOptions({
+    const sfc = composeSfcBlocks('', md, {
       linkTransforms: link({
         ruleBasedClasses: [[/colors\.com/, 'colorful']],
       }),
-    }))
+    })
     document.body.innerHTML = sfc.html
     const colorful = document.querySelectorAll('.colorful')
 
@@ -64,7 +63,7 @@ describe('link testing', () => {
   })
 
   it('internal index route reference to a markdown file is cleaned up', () => {
-    const sfc = composeSfcBlocks('', md, resolveOptions({ linkTransforms: link({ useRouterLinks: false }) }))
+    const sfc = composeSfcBlocks('', md, { linkTransforms: link({ useRouterLinks: false }) })
     document.body.innerHTML = sfc.html
     const internal = document.querySelectorAll('.internal-link')
     const indexRoute = internal.find(i => i.textContent === 'index route')
@@ -91,7 +90,7 @@ describe('link testing', () => {
   })
 
   it('external routes with .md reference are left as is', () => {
-    const sfc = composeSfcBlocks('', md, resolveOptions({ linkTransforms: link() }))
+    const sfc = composeSfcBlocks('', md, { linkTransforms: link() })
     document.body.innerHTML = sfc.html
     const external = document.querySelectorAll('.external-link')
     const indexRoute = external.find(i => i.textContent === 'external index routes')

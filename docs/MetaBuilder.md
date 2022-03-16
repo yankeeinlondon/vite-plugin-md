@@ -1,4 +1,50 @@
-# Meta Mapping
+# Meta Builder  for `vite-plugin-md`
+
+The `meta` _builder_ is an available import from this plugin and provides a good set of defaults for your Markdown's meta properties as well more advanced configuration for those who need it.
+
+In all cases, this _configurator_ is meant to be plugged into the `linkTransforms` option on this plugin. So the default usage pattern would look like:
+
+```ts
+// vite.config.js
+import Markdown, { meta } from 'vite-plugin-md'
+
+export default defineConfig({
+    // ...
+    plugins: [
+        Markdown({ frontmatterPre: meta() }),
+    ],
+})
+```
+
+
+### Router Meta
+
+When you're using this plugin with the popular pairing of `vite-plugin-pages` this plugin offers a custom SFC block called `<route>` and this allows your VueJS components to add something like:
+
+```html
+<script></script>
+<template></template>
+<route>
+  meta:
+    layout: exotic
+</route>
+```
+
+As convenient as this syntax is for a VueJS component, it feels awkward in Markdown where "notational velocity" is almost always the goal. Fortunately we've got you covered. If you're using the default configuration of this plugin you can express that the "exotic" layout property should be set on the route with just a frontmatter property:
+
+```md
+---
+layout: exotic
+---
+# Wow this is Amazing!
+```
+
+How this works -- exactly like Head and Meta properties -- is done via mapping.
+
+> See [Mapping section](./docs/MetaMapping.md) for more detail.
+
+For more options available, please refer to [`@vueuse/head`'s docs](https://github.com/vueuse/head).
+
 
 _Meta mapping_ refers to mapping "data sources" into "data sinks" and is manipulated by changing the API on this plugin's `metaMap` property. At build time (and HMR), this map will take all data available in the sinks and ensure it gets placed into the right output.
 

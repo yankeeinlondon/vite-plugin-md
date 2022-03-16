@@ -17,8 +17,10 @@ export function resolveOptions(userOptions: Options = {}): ResolvedOptions {
     customSfcBlocks: ['route', 'i18n', 'style'],
     markdownItOptions: {},
     markdownItUses: [],
-    markdownItSetup: () => {},
-    grayMatterOptions: {},
+    markdownItSetup: () => { },
+    grayMatterOptions: typeof userOptions.excerpt === 'string'
+      ? { excerpt: true, excerpt_separator: userOptions.excerpt }
+      : { excerpt: userOptions.excerpt },
     wrapperComponent: null,
     linkTransforms: f => f,
     linkifyLookup: {},

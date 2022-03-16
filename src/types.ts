@@ -2,7 +2,7 @@
 import type MarkdownIt from 'markdown-it'
 import type { FilterPattern } from '@rollup/pluginutils'
 import type { Plugin, UserConfig } from 'vite'
-import { WithExtras } from './builders/plugins/md-link'
+import type { WithExtras } from './builders/plugins/md-link'
 
 export type ViteConfig = Parameters<Exclude<Plugin['configResolved'], undefined>>[0]
 
@@ -78,8 +78,12 @@ export type StringTransformer = (meta: LinkElement) => string
  */
 export interface Frontmatter {
   title?: string
-  name?: string
   description?: string
+  subject?: string
+  category?: string
+  name?: string
+  excerpt?: string
+  image?: string
   meta?: MetaProperty[]
   [key: string]: unknown
 }
@@ -96,6 +100,23 @@ export interface RouteProperties {
 }
 
 /**
+ * A function which receives the full content of the page and
+ * gives control to the function to determine what part should
+ * be considered the excerpt.
+ *
+ * Example:
+ * ```ts
+ * function firstFourLines(file, options) {
+ *    file.excerpt = file.content
+ *      .split('\n')
+ *      .slice(0, 4)
+ *      .join(' ')
+ * }
+ * ```
+ */
+export type ExcerptFunction = (contents: string, options: GraymatterOptions) => string
+
+/**
  * Options for Graymatter parser [[Docs](https://github.com/jonschlinkert/gray-matter#options)]
  */
 export interface GraymatterOptions {
@@ -103,17 +124,24 @@ export interface GraymatterOptions {
    * Extract an excerpt that directly follows front-matter, or is the
    * first thing in the string if no front-matter exists.
    *
-   * If set to excerpt: true, it will look for the frontmatter delimiter,
+   * If set to excerpt `true`, it will look for the frontmatter delimiter,
    * --- by default and grab everything leading up to it.
    *
-   * You can also set excerpt to a function. This function uses the 'file'
-   * and 'options' that were initially passed to gray-matter as parameters,
-   * so you can control how the excerpt is extracted from the content.
+   * You can also set excerpt to a function. This function that receives the
+   * full page contents and Graymatter Options as parameters and lets you
+   * decide what should be included.
+   *
+   * @default undefined
    */
-  excerpt?: boolean | (() => string)
+  excerpt?: boolean | ExcerptFunction
 
   /**
    * Define a custom separator to use for excerpts.
+   *
+   * This will be used only when the `excerpt` property is set
+   * to `true`.
+   *
+   * @default undefined
    */
   excerpt_separator?: string
 
@@ -192,14 +220,28 @@ export interface Options {
   frontmatter?: boolean
 
   /**
-   * Parse for excerpt
+   * This property determines how to process "excerpts" and acts as a "smart
+   * proxy" to the `excerpt` and `excerpt_separator` properties on the popular
+   * graymatter package.
    *
-   * If `true`, it will be passed to `frontmatterPreprocess` as `frontmatter.excerpt`, replacing
-   * the `excerpt` key in frontmatter, if there's any
+   * When this property is set to `true` it uses looks in the body of page
+   * and extracts text up to the first "`---`" separator it finds (after
+   * frontmatter).
+   *
+   * If you'd prefer that it instead looks for some _other_ text as a separator
+   * you can state that as a string value (this has the same effect of setting `true` and then changing the Graymatter option of `excerpt_separator`).
+   *
+   * Finally, if you want full control, you can put in a function and receive
+   * a callback with the full contents of the page and you can programatically
+   * decide what to make
    *
    * @default false
    */
-  excerpt?: boolean
+  // TODO: this is a change and should get some design review; I think it makes
+  // a lot of logical sense but the prior goals -- which were split between this
+  // property and Graymatter options -- were not documented so I may have missed
+  // some intent
+  excerpt?: boolean | ExcerptFunction | string
 
   /**
    * Remove custom SFC block

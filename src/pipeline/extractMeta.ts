@@ -66,8 +66,7 @@ export interface Metadata {
  */
 export function extractMeta(raw: MatterContent, id: string, options: WithConfig<ResolvedOptions>): Metadata {
   const o: GraymatterOptions = {
-    ...options.grayMatterOptions,
-    excerpt: options.excerpt || options.grayMatterOptions.excerpt,
+    ...options.grayMatterOptions
   }
 
   const r = matter(raw, o)

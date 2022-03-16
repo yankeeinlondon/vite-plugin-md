@@ -59,6 +59,8 @@ export interface HtmlScriptAndBlocks {
 export function extractBlocks(meta: Metadata, options: ResolvedOptions): HtmlScriptAndBlocks {
   let { html } = meta
   const { wrapperClasses, wrapperComponent, escapeCodeTagInterpolation } = options
+  const langs = new Set<string>()
+  const replacements = new Map()
 
   if (wrapperClasses)
     html = `<div class="${wrapperClasses}">${html}</div>`
@@ -67,10 +69,33 @@ export function extractBlocks(meta: Metadata, options: ResolvedOptions): HtmlScr
   if (wrapperComponent)
     html = `<${wrapperComponent}${options.frontmatter ? ' :frontmatter="frontmatter"' : ''}${options.excerpt ? ' :excerpt="excerpt"' : ''}>${html}</${wrapperComponent}>`
 
+  // identify targets for interpolation in <code>, #14
   if (escapeCodeTagInterpolation) {
-    // escape curly brackets interpolation in <code>, #14
-    html = html.replace(/<code(.*?)>/g, '<code$1 v-pre>')
+    const match = html.matchAll(/<code.*?language-([!]{0,1})(\w+).*?>/g)
+    for (const m of match) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [codeTag, negation, lang] = m
+      langs.add(lang)
+      if (negation !== '!')
+        replacements.set(codeTag, codeTag.replace('>', ' v-pre>'))
+      else
+        replacements.set(codeTag, codeTag.replace(`!${lang}`, `${lang}`))
+    }
   }
+  else {
+    const match = html.matchAll(/<code.*?language-([!]{0,1})(\w+).*?>/g)
+    for (const m of match) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [codeTag, negation, lang] = m
+      langs.add(lang)
+      if (negation === '!')
+        replacements.set(codeTag, codeTag.replace(`!${lang}`, `${lang}`).replace('>', ' v-pre>'))
+    }
+  }
+
+  // iterate over interpolation replacements
+  for (const [k, v] of replacements)
+    html = html.replaceAll(k, v)
 
   // extract script blocks, adjust HTML
   const hoistScripts = extractScriptBlocks(html)

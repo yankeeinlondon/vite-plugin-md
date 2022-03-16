@@ -2,7 +2,7 @@ import { join } from 'path'
 import { normalizePath } from 'vite'
 import type { LinkElement, LinkifyConfig, StringTransformer } from '../types'
 import { keys } from '../utils'
-import { WithExtras } from './plugins/md-link'
+import type { WithExtras } from './plugins/md-link'
 
 const staticRuleLookup = {
   externalLinkClass: /^https?:/,
@@ -24,7 +24,7 @@ function isInternalLink(meta: LinkElement): meta is LinkElement & { href: string
   return !!(meta.href && staticRuleLookup.internalLinkClass.test(meta.href))
 }
 
-function transform(transformer: string | StringTransformer | undefined, meta: LinkElement): string | undefined {
+function transform(transformer: string | StringTransformer | undefined, meta: WithExtras<LinkElement>): string | undefined {
   if (!transformer)
     return undefined
   else if (typeof transformer === 'function')

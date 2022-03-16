@@ -1,8 +1,7 @@
 import { readFile } from 'fs/promises'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { resolveOptions } from '../src/options'
 import { composeSfcBlocks } from '../src/pipeline'
-import type { MetaProperty, Options, ResolvedOptions } from '../src/types'
+import type { MetaProperty, ResolvedOptions } from '../src/types'
 
 const frontmatterPreprocess: ResolvedOptions['frontmatterPreprocess'] = (fm) => {
   const frontmatter = {
@@ -29,32 +28,54 @@ const frontmatterPreprocess: ResolvedOptions['frontmatterPreprocess'] = (fm) => 
 
 let md = ''
 
-describe('provide bespoke frontmatter processor', () => {
+describe('frontmatter pre-processor (without use of meta builder pattern)', () => {
   beforeAll(async() => {
     md = await readFile('test/fixtures/simple.md', 'utf-8')
   })
 
+  it('frontmatter is unchanged', () => {
+    const { meta } = composeSfcBlocks('', md, { frontmatterPreprocess })
+    expect(meta.frontmatter).toMatchSnapshot()
+  })
+
+  it('head is unchanged', () => {
+    const { meta } = composeSfcBlocks('', md, { frontmatterPreprocess })
+    expect(meta.head).toMatchSnapshot()
+  })
+
+  it('meta props are unchanged', () => {
+    const { meta } = composeSfcBlocks('', md, { frontmatterPreprocess })
+    expect(meta.metaProps).toMatchSnapshot()
+  })
+
   it('inline markdown is used over default properties', async() => {
-    const options: Options = { frontmatterPreprocess }
-    const { html } = composeSfcBlocks('', md, resolveOptions(options))
+    const { meta } = composeSfcBlocks('', md, { frontmatterPreprocess })
+
     // Positive tests
     expect(
-      html.includes('Hello World'),
+      meta.frontmatter.title.includes('Hello World'),
       'the title attribute is retained over the default \'title\' value',
     ).toBeTruthy()
+
     expect(
-      html.includes('testing is the path to true happiness'),
+      meta.frontmatter.description.includes('testing is the path to true happiness'),
       'description property is also retained',
     ).toBeTruthy()
+
     // Negative tests
     expect(
-      html.includes('default title'),
+      meta.frontmatter.title.includes('default title'),
       'the title attribute is retained over the default \'title\' value',
     ).toBeFalsy()
-    expect(html.includes('default description'), 'default description is ignored').toBeFalsy()
+
+    expect(meta.frontmatter.description.includes('default description'), 'default description is ignored').toBeFalsy()
 
     // Meta props
-    expect(html.includes('og:title')).toBeTruthy()
-    expect(html.includes('og:description')).toBeTruthy()
+    const title = meta.head.meta.find(i => i.itemprop === 'title')
+    const desc = meta.head.meta.find(i => i.itemprop === 'description')
+    expect(title).toBeDefined()
+    expect(desc).toBeDefined()
+    expect(title?.property).toEqual('og:title')
+    expect(desc?.property).toEqual('og:description')
   })
 })

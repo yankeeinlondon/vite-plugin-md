@@ -67,3 +67,29 @@ describe('use "meta" builder for frontmatterPreprocess', () => {
     expect(output.includes('defineExpose({ frontmatter })')).toBeTruthy()
   })
 })
+
+describe('meta() snapshots', () => {
+  beforeAll(async() => {
+    md = await readFile('test/fixtures/meta.md', 'utf-8')
+  })
+
+  it('frontmatter is consistent', () => {
+    const { meta } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(meta.frontmatter).toMatchSnapshot()
+  })
+
+  it('HTML is consistent', () => {
+    const { html } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(html).toMatchSnapshot()
+  })
+
+  it('script blocks are consistent', () => {
+    const { script } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(script).toMatchSnapshot()
+  })
+
+  it('custom blocks are consistent', () => {
+    const { customBlocks } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(customBlocks).toMatchSnapshot()
+  })
+})

@@ -1,5 +1,5 @@
 import { addMetaTag } from '../pipeline/addMetaTag'
-import type { Frontmatter, MetaProperty, ProcessedFrontmatter, ResolvedOptions } from '../types'
+import type { Frontmatter, MetaProperty, ProcessedFrontmatter, ResolvedOptions } from '../@types'
 
 export type MetaFlag = [prop: string, defVal: boolean]
 

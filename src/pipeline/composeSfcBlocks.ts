@@ -1,5 +1,5 @@
 import { resolveOptions } from '../options'
-import type { Options, ResolvedOptions, SfcBlocks, ViteConfigPassthrough, WithConfig } from '../types'
+import type { Options, ResolvedOptions, SfcBlocks, ViteConfigPassthrough, WithConfig } from '../@types/core'
 import { wrap } from '../utils'
 import { extractBlocks, extractMeta } from './index'
 

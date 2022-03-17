@@ -1,6 +1,6 @@
 import matter from 'gray-matter'
 import type MarkdownIt from 'markdown-it'
-import type { Frontmatter, GraymatterOptions, MetaProperty, ResolvedOptions, RouteProperties, WithConfig } from '../types'
+import type { Frontmatter, GraymatterOptions, MetaProperty, ResolvedOptions, RouteProperties, WithConfig } from '../@types/core'
 import { createParser } from './createParser'
 
 export type MatterContent = string | { content: string }

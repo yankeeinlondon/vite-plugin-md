@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { meta } from '../src'
 import { composeSfcBlocks } from '../src/pipeline'
-import type { Options } from '../src/types'
+import type { Options } from '../src/@types'
 
 let md = ''
 

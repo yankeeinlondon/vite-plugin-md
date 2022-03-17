@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { composeSfcBlocks } from '../src/pipeline'
-import type { MetaProperty, ResolvedOptions } from '../src/types'
+import type { MetaProperty, ResolvedOptions } from '../src/@types'
 
 const frontmatterPreprocess: ResolvedOptions['frontmatterPreprocess'] = (fm) => {
   const frontmatter = {

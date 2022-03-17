@@ -2,7 +2,7 @@ import { dirname, join } from 'node:path'
 import { normalizePath } from 'vite'
 import type { PluginWithOptions } from 'markdown-it'
 import type Token from 'markdown-it/lib/token'
-import type { LinkElement, LinkTransformer } from '../../types'
+import type { LinkElement, LinkTransformer } from '../../@types/core'
 
 type NameValueTuple = [name: string, value: string]
 

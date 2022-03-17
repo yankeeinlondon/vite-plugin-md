@@ -1,4 +1,4 @@
-import type { ResolvedOptions } from '../types'
+import type { ResolvedOptions } from '../@types'
 import { isVue2, wrap } from '../utils'
 import type { Metadata } from './extractMeta'
 

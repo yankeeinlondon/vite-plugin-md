@@ -1,8 +1,9 @@
 # Meta Builder  for `vite-plugin-md`
+> References: [Builder API](./BuilderApi.md), [Build Pipeline](./BuildPipeline.md)
 
-The `meta` _builder_ is an available import from this plugin and provides a good set of defaults for your Markdown's meta properties as well more advanced configuration for those who need it.
+The `meta` _builder_ provides a good set of defaults for your Markdown's meta properties along with the ability to configure it to do virtually anything you'd want.
 
-In all cases, this _configurator_ is meant to be plugged into the `linkTransforms` option on this plugin. So the default usage pattern would look like:
+Using the default functionality of `meta()` is as simple as:
 
 ```ts
 // vite.config.js
@@ -11,10 +12,95 @@ import Markdown, { meta } from 'vite-plugin-md'
 export default defineConfig({
     // ...
     plugins: [
-        Markdown({ frontmatterPre: meta() }),
+        Markdown({ builders: [ meta() ] }),
     ],
 })
 ```
+
+This builder provides the following functionality:
+
+- **Mapping.** Maps commonly used _frontmatter_ properties to HEAD, META, or ROUTER meta. The properties that come "out of the box" are as follows:
+
+    - Default mapping rules are:
+
+        | Property     | Associated To |
+        | ------------ | ------------- |
+        | title        | HEAD, META    |
+        | description  | META          |
+        | layout       | ROUTER        |
+        | image        | META          |
+        | image_height | META          |
+        | image_width  | META          |
+        | url          | META          |
+
+    - META properties are given appropriate key/value tags for the typical social platforms typically targetted (e.g., Facebook/OpenGraph uses _property_, Twitter uses _name_, Google Search uses _itemprop_ and _key_ is thrown in for good measure)
+    - HEAD properties of any type are allowed for with Title getting special consideration
+    - ROUTER properties are moved into the "meta" property for the given route
+- **Defaulting**
+    - Provides simple and consistent means for default meta values across all classes of meta data
+    - Defaults can be static, dynamic (aka, functional callback with context), or can accept reactive properties.
+- **@vueuse/head integration**
+    - The base plugin offers integration with `@vueuse/head` but this plugin just offers a slightly easier API to use integrate it
+    - It also ensures that during build time the head/meta properties are written to the HTML when SSG/SSR is being used
+    - Note: like the base plugin, you must use this integration to get HEAD and META properties
+- **Meta** event
+    - Produces a "meta" event providing all mapped META outputs
+    - This event becomes available to all other Builders being used
+
+> **Note:** all properties which are mapped to HEAD, META, or ROUTER are also maintained and available as Frontmatter properties (rather than being moved)
+
+## Categories of Metadata
+
+The categories of metadata supported are illustrated below:
+
+```mermaid
+flowchart LR
+  subgraph Component
+  fm[frontmatter]
+  end
+  subgraph HEAD
+  fm --> Head
+  fm --> Meta
+  end
+  subgraph Router
+  fm --> router[route meta]
+  end
+```
+
+- everything starts out as being defined as a _frontmatter_ property and these properties are owned by the Component/Page itself
+- they can then be _mapped_ to:
+  - The integration with `@usevue/head` to manage HEAD and META properties
+  - The `vue-router` (if using `vite-plugin-pages`) for ROUTER meta
+
+## Configuration
+
+If you want to amend the default mappings you can do so easily by modifying the `metaProps`, `headProps`, and `routeProps` properties. To create default values you can use `defaults`:
+
+```ts
+import Markdown, { link, meta } from 'markdown-it-md'
+export default {
+  plugins: [
+    Markdown({
+      builders: [
+        meta({
+          metaProps: ['title', 'description', 'tags'],
+          routeProps: ['layout', 'needsAuth'],
+          headProps: ['title'],
+          defaults: {
+            title: (ctx) => ctx.h1 || 'Amazing App',
+            description: (ctx) => ctx.path.includes('blog')
+              ? 'Amazing Blog'
+              : 'Amazing Site',
+            copyright: 'Greedy Company Incorporated &copy;2022',
+          }
+        })
+      ]
+    })
+  ]
+}
+```
+
+
 
 
 ### Router Meta

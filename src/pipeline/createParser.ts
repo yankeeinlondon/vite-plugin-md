@@ -1,6 +1,6 @@
 import { toArray } from '@antfu/utils'
 import MarkdownIt from 'markdown-it'
-import type { ResolvedOptions, WithConfig } from '../types'
+import type { ResolvedOptions, WithConfig } from '../@types'
 import MdLink from '../builders/plugins/md-link'
 
 /**
@@ -26,7 +26,6 @@ export function createParser(id: string, options: WithConfig<ResolvedOptions>) {
 
   options.markdownItUses.forEach((e) => {
     const [plugin, options] = toArray(e)
-
     markdown.use(plugin, options)
   })
 

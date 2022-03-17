@@ -1,6 +1,6 @@
 import { join } from 'path'
 import { normalizePath } from 'vite'
-import type { LinkElement, LinkifyConfig, StringTransformer } from '../types'
+import type { LinkElement, LinkifyConfig, StringTransformer } from '../@types'
 import { keys } from '../utils'
 import type { WithExtras } from './plugins/md-link'
 

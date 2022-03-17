@@ -1,4 +1,4 @@
-import type { MetaProperty } from '../types'
+import type { MetaProperty } from '../@types'
 
 export function addMetaTag(k: string, v: any): MetaProperty {
   return ({

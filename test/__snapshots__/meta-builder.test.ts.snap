@@ -16,6 +16,7 @@ exports[`meta() snapshots > custom blocks are consistent 1`] = `[]`;
 exports[`meta() snapshots > frontmatter is consistent 1`] = `
 {
   "byline": "who loves ya baby?",
+  "excerpt": undefined,
   "image": "facebook.png",
   "layout": "yowza",
   "title": "Metadata Rules",
@@ -28,6 +29,8 @@ exports[`meta() snapshots > script blocks are consistent 1`] = `
  const byline = \\"who loves ya baby?\\"
  const layout = \\"yowza\\"
  const image = \\"facebook.png\\"
+ const excerpt = undefined
 defineExpose({ frontmatter })
+const head = {\\"title\\":\\"Metadata Rules\\",\\"byline\\":\\"who loves ya baby?\\",\\"layout\\":\\"yowza\\",\\"image\\":\\"facebook.png\\"}
 </script>"
 `;

@@ -1,4 +1,13 @@
-import type { LinkElement, LinkTransformer } from './core'
+import type { LinkElement } from '../../@types/core'
+import type { WithTagAndBase } from './md-link'
+
+/**
+ * A callback function which is passed a name/value dictionary of
+ * properties on a link tag and expects these inputs to be converted
+ * to a similarly structured response before the Markdown is rendered
+ * to HTML.
+ */
+export type LinkTransformer = (link: WithTagAndBase<LinkElement>) => WithTagAndBase<LinkElement>
 
 /**
  * a callback function which is provided a Link's key/value
@@ -98,8 +107,8 @@ export interface LinkifyConfig {
   documentClass: undefined | string | StringTransformer
 
   /**
-   * a tuple which defines both a rule and resultant class string which
-   * is intended to applied if the rule tests positive
+   * a tuple which defines both a RegEx rule/pattern and a resultant **class** string which
+   * is applied if the rule tests positive
    */
   ruleBasedClasses: [rule: RegExp, klass: string][]
 

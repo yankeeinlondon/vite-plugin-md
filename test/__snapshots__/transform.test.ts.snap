@@ -9,6 +9,7 @@ exports[`transform snapshots > customBlocks remain the same 1`] = `
 exports[`transform snapshots > frontmatter remains the same 1`] = `
 {
   "description": "hello world",
+  "excerpt": undefined,
   "hello": "how friendly",
   "title": "transform tests",
 }
@@ -17,6 +18,7 @@ exports[`transform snapshots > frontmatter remains the same 1`] = `
 exports[`transform snapshots > head props remains the same 1`] = `
 {
   "description": "hello world",
+  "excerpt": undefined,
   "hello": "how friendly",
   "title": "transform tests",
 }
@@ -24,8 +26,10 @@ exports[`transform snapshots > head props remains the same 1`] = `
 
 exports[`transform snapshots > html remains the same 1`] = `
 "<div class=\\"markdown-body\\"><h1>Hello</h1>
-
-
+<style>h1 { color: red }</style>
+<script setup lang=\\"ts\\">
+import Foo from './Foo.vue'
+</script>
 <ul>
 <li>A</li>
 <li>B</li>
@@ -52,6 +56,8 @@ const frontmatter = {\\"title\\":\\"transform tests\\",\\"description\\":\\"hell
  const title = \\"transform tests\\"
  const description = \\"hello world\\"
  const hello = \\"how friendly\\"
+ const excerpt = undefined
 defineExpose({ frontmatter })
+const head = {\\"title\\":\\"transform tests\\",\\"description\\":\\"hello world\\",\\"hello\\":\\"how friendly\\"}
 </script>"
 `;

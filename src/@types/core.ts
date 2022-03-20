@@ -2,10 +2,20 @@
 import type MarkdownIt from 'markdown-it'
 import type { FilterPattern } from '@rollup/pluginutils'
 import type { Plugin, UserConfig } from 'vite'
-import type { WithExtras } from '../builders/plugins/md-link'
-import type { ExcerptFunction, RouteProperties } from './meta-builder'
+import type { BuilderRegistration } from './pipeline'
 
 export type ViteConfig = Parameters<Exclude<Plugin['configResolved'], undefined>>[0]
+
+/**
+ * The key/value definition for Route Properties.
+ *
+ * Note: we know that "layout" is likely and a _string_
+ * but all other props are possible.
+ */
+export interface RouteProperties {
+  layout?: string
+  [key: string]: unknown
+}
 
 export interface SfcBlocks {
   /** the HTML template block of the SFC */
@@ -82,6 +92,23 @@ export type Include<T, U, L extends boolean = false> = L extends true
 export type Retain<T, K extends keyof T> = Pick<T, Include<keyof T, K>>
 
 /**
+ * A function which receives the full content of the page and
+ * gives control to the function to determine what part should
+ * be considered the excerpt.
+ *
+ * Example:
+ * ```ts
+ * function firstFourLines(file, options) {
+ *    file.excerpt = file.content
+ *      .split('\n')
+ *      .slice(0, 4)
+ *      .join(' ')
+ * }
+ * ```
+ */
+export type ExcerptFunction = (contents: string, options: GraymatterOptions) => string
+
+/**
  * Options for Graymatter parser [[Docs](https://github.com/jonschlinkert/gray-matter#options)]
  */
 export interface GraymatterOptions {
@@ -97,6 +124,8 @@ export interface GraymatterOptions {
    * decide what should be included.
    *
    * @default undefined
+   *
+   * @deprecated use the root option of `excerpt` instead
    */
   excerpt?: boolean | ExcerptFunction
 
@@ -107,6 +136,8 @@ export interface GraymatterOptions {
    * to `true`.
    *
    * @default undefined
+   *
+   * @deprecated use a string value in the root `excerpt` option instead
    */
   excerpt_separator?: string
 
@@ -133,14 +164,6 @@ export interface GraymatterOptions {
   delimiters?: string | [string, string]
 }
 
-/**
- * A callback function which is passed a name/value dictionary of
- * properties on a link tag and expects these inputs to be converted
- * to a similarly structured response before the Markdown is rendered
- * to HTML.
- */
-export type LinkTransformer = (link: WithExtras<LinkElement>) => WithExtras<LinkElement>
-
 export interface ProcessedFrontmatter {
   /**
    * non-meta props intended for the HEAD of the page
@@ -162,6 +185,9 @@ export interface ProcessedFrontmatter {
 }
 
 export interface Options {
+  /** allows adding in Builder's which help to expand functionality of this plugin */
+  builders?: (() => BuilderRegistration<any, any>)[]
+
   /**
    * Explicitly set the Vue version
    *
@@ -310,36 +336,6 @@ export interface Options {
     before?: (code: string, id: string) => string
     after?: (code: string, id: string) => string
   }
-
-  /**
-   * It is _often_ desirable to modify the link tags in your Markdown content
-   * to distinguish between areas of your site, external links versus internal,
-   * etc.
-   *
-   * This callback function can be used to modify each link as you like
-   * but you can also opt to use the build in export of `linkify`:
-   * ```ts
-   * import Markdown, { link } from "vite-plugin-md";
-   * export default defineConfig(() => {
-   *    plugins: { Markdown({ linkTransforms: link() }) }
-   * }
-   * ```
-   *
-   * The `link()` builder utility is fully typed and gives you both sensible defaults
-   * as well as configuration options to meet your specific needs. However, should you
-   * wish to approach this at a lower level, then you can simply add in your own
-   * `LinkTransformer` function.
-   */
-  linkTransforms?: LinkTransformer | null
-
-  /**
-   * Provides the means to send in a key/value dictionary where:
-   *
-   * - the _keys_ represent known words/phrases which will be converted to a link when
-   * found in the body of the text of markdown files.
-   * - the _values_ are either just a URL or can be a `LinkElement` key/value pairing
-   */
-  linkifyLookup?: Record<string, LinkElement | string>
 
   /**
    * Optionally allows user to explicitly whitelist files which will be transformed

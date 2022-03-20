@@ -1,45 +1,60 @@
 // Vitest Snapshot v1
 
-exports[`frontmatter pre-processor (without use of meta builder pattern) > frontmatter is unchanged 1`] = `
+exports[`frontmatter pre-processor > frontmatter is unchanged 1`] = `
 {
   "description": "testing is the path to true happiness",
+  "excerpt": undefined,
   "meta": [
     {
       "content": "Hello World",
-      "itemprop": "title",
-      "name": "twitter:title",
       "property": "og:title",
     },
     {
       "content": "testing is the path to true happiness",
-      "itemprop": "description",
-      "name": "twitter:description",
       "property": "og:description",
+    },
+    {
+      "content": "testing is the path to true happiness",
+      "name": "description",
     },
   ],
   "title": "Hello World",
 }
 `;
 
-exports[`frontmatter pre-processor (without use of meta builder pattern) > head is unchanged 1`] = `
+exports[`frontmatter pre-processor > head is unchanged 1`] = `
 {
-  "description": "testing is the path to true happiness",
   "meta": [
     {
       "content": "Hello World",
-      "itemprop": "title",
-      "name": "twitter:title",
       "property": "og:title",
     },
     {
       "content": "testing is the path to true happiness",
-      "itemprop": "description",
-      "name": "twitter:description",
       "property": "og:description",
+    },
+    {
+      "content": "testing is the path to true happiness",
+      "name": "description",
     },
   ],
   "title": "Hello World",
 }
 `;
 
-exports[`frontmatter pre-processor (without use of meta builder pattern) > meta props are unchanged 1`] = `[]`;
+exports[`frontmatter pre-processor > meta props are unchanged 1`] = `
+[
+  {
+    "content": "Hello World",
+    "property": "og:title",
+  },
+  {
+    "content": "testing is the path to true happiness",
+    "property": "og:description",
+  },
+  {
+    "content": "testing is the path to true happiness",
+    "name": "description",
+  },
+]
+`;

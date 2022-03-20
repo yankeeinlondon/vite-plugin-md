@@ -11,15 +11,15 @@ describe('transform snapshots', () => {
 
   it('frontmatter remains the same', () => {
     const sfc = composeSfcBlocks('transform.md', page)
-    expect(sfc.meta.frontmatter).toMatchSnapshot()
+    expect(sfc.frontmatter).toMatchSnapshot()
   })
   it('meta props remains the same', () => {
     const sfc = composeSfcBlocks('transform.md', page)
-    expect(sfc.meta.metaProps).toMatchSnapshot()
+    expect(sfc.meta).toMatchSnapshot()
   })
   it('head props remains the same', () => {
     const sfc = composeSfcBlocks('transform.md', page)
-    expect(sfc.meta.head).toMatchSnapshot()
+    expect(sfc.head).toMatchSnapshot()
   })
   it('html remains the same', () => {
     const sfc = composeSfcBlocks('transform.md', page)
@@ -31,7 +31,7 @@ describe('transform snapshots', () => {
   })
   it('script blocks remain the same', () => {
     const sfc = composeSfcBlocks('transform.md', page)
-    expect(sfc.script).toMatchSnapshot()
+    expect(sfc.scriptBlock).toMatchSnapshot()
   })
 })
 
@@ -50,7 +50,7 @@ describe('transform', () => {
 
   it('escapeCodeTagInterpolation behavior exhibited when option set to true (default)', () => {
     const sfc = composeSfcBlocks('transform.md', page)
-    
+
     expect(sfc.html.includes(ESCAPED_CODE_TAG('html'))).toBeTruthy()
     expect(
       sfc.html.includes(UN_ESCAPED_CODE_TAG('ts')),

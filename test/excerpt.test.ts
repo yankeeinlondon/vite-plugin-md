@@ -14,17 +14,28 @@ describe('excerpt', () => {
   it('excerpt ignored in body if option set to false', async() => {
     const options: Options = { excerpt: false }
     const sfc = composeSfcBlocks('excerpt.md', md, options)
-
-    expect(sfc.meta.frontmatter.excerpt).toBeUndefined()
+    const preamble = `\nWhen excerpts are off [${sfc.options.excerpt}, ${sfc.options.grayMatterOptions.excerpt}, sep: ${sfc.options.grayMatterOptions.excerpt_separator}]`
+    expect(sfc.frontmatter.excerpt, `${preamble}, frontmatter.excerpt should be undefined but wasn't`).toBeUndefined()
+    expect(sfc.excerpt).toBeUndefined()
+    expect(
+      sfc.html.includes('The default excerpt is assumed to be the text'),
+      `${preamble}, should now include text above the default separator`,
+    ).toBeTruthy()
+    expect(
+      sfc.html.includes('basically it is this text here.'),
+      `${preamble}, should now include text above the default separator`,
+    ).toBeTruthy()
   })
 
   it('excerpt found in body if option set to true', async() => {
     const options: Options = { excerpt: true }
     const sfc = composeSfcBlocks('excerpt.md', md, options)
-
-    expect(sfc.meta.frontmatter.excerpt).toBeTypeOf('string')
-    expect(sfc.meta.frontmatter.excerpt).toContain('The default excerpt is assumed to be the text up to')
-    expect(sfc.meta.frontmatter.excerpt).not.toContain('Hello')
+    expect(sfc.excerpt).toBeTypeOf('string')
+    expect(sfc.frontmatter.excerpt).toContain('The default excerpt is assumed to be the text up to')
+    expect(
+      sfc.frontmatter.excerpt,
+      'text after the default excerpt divider should not be in the excerpt',
+    ).not.toContain('Hello')
   })
 
   it('excerpt with custom separator found when specified', async() => {
@@ -32,25 +43,25 @@ describe('excerpt', () => {
     const options: Options = { excerpt: '<!-- more -->' }
     const sfc = composeSfcBlocks('excerpt.md', content, options)
 
-    expect(sfc.meta.frontmatter.excerpt).toBeTypeOf('string')
-    expect(sfc.meta.frontmatter.excerpt).toContain('This is an excerpt')
-    expect(sfc.meta.frontmatter.excerpt).not.toContain('Hello')
+    expect(sfc.frontmatter.excerpt).toBeTypeOf('string')
+    expect(sfc.frontmatter.excerpt).toContain('This is an excerpt')
+    expect(sfc.frontmatter.excerpt).not.toContain('Hello')
   })
 
   it('frontmatter default is overriden by body excerpt', async() => {
     const options: Options = {
       excerpt: true,
-      frontmatterPreprocess: meta({
+      builders: [meta({
         defaults: {
           excerpt: 'this is the default',
         },
-      }),
+      })],
     }
     const sfc = composeSfcBlocks('excerpt.md', md, options)
 
-    expect(sfc.meta.frontmatter.excerpt).toBeTypeOf('string')
-    expect(sfc.meta.frontmatter.excerpt).toContain('The default excerpt is assumed to be the text up to')
-    expect(sfc.meta.frontmatter.excerpt).not.toContain('Hello')
+    expect(sfc.frontmatter.excerpt).toBeTypeOf('string')
+    expect(sfc.frontmatter.excerpt).toContain('The default excerpt is assumed to be the text up to')
+    expect(sfc.frontmatter.excerpt).not.toContain('Hello')
   })
 })
 
@@ -60,8 +71,8 @@ describe('excerpt snapshots', () => {
   })
 
   it('frontmatter is consistent', () => {
-    const { meta } = composeSfcBlocks('excerpt.md', md)
-    expect(meta.frontmatter).toMatchSnapshot()
+    const { frontmatter } = composeSfcBlocks('excerpt.md', md)
+    expect(frontmatter).toMatchSnapshot()
   })
 
   it('HTML is consistent', () => {
@@ -70,8 +81,8 @@ describe('excerpt snapshots', () => {
   })
 
   it('script blocks are consistent', () => {
-    const { script } = composeSfcBlocks('excerpt.md', md)
-    expect(script).toMatchSnapshot()
+    const { scriptBlock } = composeSfcBlocks('excerpt.md', md)
+    expect(scriptBlock).toMatchSnapshot()
   })
 
   it('custom blocks are consistent', () => {

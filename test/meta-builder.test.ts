@@ -13,43 +13,44 @@ describe('use "meta" builder for frontmatterPreprocess', () => {
   })
 
   it('with no config, doc props all available as frontmatter props and other meta props get default mapping', () => {
-    const options: Options = { frontmatterPreprocess: meta() }
-    const sfc = composeSfcBlocks('', md, resolveOptions(options))
+    const sfc = composeSfcBlocks('', md, { builders: [meta()] })
 
-    expect(sfc.meta.frontmatter.title).toEqual('Metadata Rules')
-    expect(sfc.meta.frontmatter.byline).toEqual('who loves ya baby?')
-    expect(sfc.meta.frontmatter.layout).toEqual('yowza')
-    expect(sfc.meta.frontmatter.image).toEqual('facebook.png')
+    expect(sfc.frontmatter.title).toEqual('Metadata Rules')
+    expect(sfc.frontmatter.byline).toEqual('who loves ya baby?')
+    expect(sfc.frontmatter.layout).toEqual('yowza')
+    expect(sfc.frontmatter.image).toEqual('facebook.png')
 
-    expect(sfc.meta.head.title).toEqual('Metadata Rules')
-    expect(sfc.meta.routeMeta.layout).toEqual('yowza')
-    expect(sfc.meta.metaProps.find(p => p.key === 'title')).toBeDefined()
-    expect(sfc.meta.metaProps.find(p => p.key === 'image')).toBeDefined()
+    expect(sfc.head.title).toEqual('Metadata Rules')
+    expect(sfc.routeMeta.layout).toEqual('yowza')
+    expect(sfc.meta.find(p => p.key === 'title')).toBeDefined()
+    expect(sfc.meta.find(p => p.key === 'image')).toBeDefined()
   })
 
   it('default value is used when no frontmatter is present', () => {
     const options: Options = {
-      frontmatterPreprocess: meta({
-        defaults: {
-          title: 'nada',
-          description: 'there I was, there I was',
-        },
-      }),
+      builders: [
+        meta({
+          defaults: {
+            title: 'nada',
+            description: 'there I was, there I was',
+          },
+        }),
+      ],
     }
     const sfc = composeSfcBlocks('', md, resolveOptions(options))
 
     expect(
-      sfc.meta.frontmatter.title,
+      sfc.frontmatter.title,
       'default value should have been ignored in favor of page value',
     ).toBe('Metadata Rules')
 
     expect(
-      sfc.meta.frontmatter.description,
+      sfc.frontmatter.description,
       'default value should have presented',
     ).toBe('there I was, there I was')
 
     expect(
-      sfc.meta.metaProps.find(i => i.key === 'description'),
+      sfc.meta.find(i => i.key === 'description'),
       'description, as a default value, should now be in meta props',
     ).toBeDefined()
   })
@@ -74,8 +75,8 @@ describe('meta() snapshots', () => {
   })
 
   it('frontmatter is consistent', () => {
-    const { meta } = composeSfcBlocks('/foobar/meta.md', md)
-    expect(meta.frontmatter).toMatchSnapshot()
+    const { frontmatter } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(frontmatter).toMatchSnapshot()
   })
 
   it('HTML is consistent', () => {
@@ -84,8 +85,8 @@ describe('meta() snapshots', () => {
   })
 
   it('script blocks are consistent', () => {
-    const { script } = composeSfcBlocks('/foobar/meta.md', md)
-    expect(script).toMatchSnapshot()
+    const { scriptBlock } = composeSfcBlocks('/foobar/meta.md', md)
+    expect(scriptBlock).toMatchSnapshot()
   })
 
   it('custom blocks are consistent', () => {

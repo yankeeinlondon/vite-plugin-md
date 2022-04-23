@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
-import Markdown from '../src/index'
+import Markdown, { code, link, meta } from '../src/index'
 
 // used for testing, library code uses TSUP to build exports
 export default defineConfig(() => ({
@@ -8,6 +8,6 @@ export default defineConfig(() => ({
     dir: 'test',
   },
   plugins: [
-    Markdown(),
+    Markdown({ builders: [link(), meta(), code()] }),
   ],
 }))

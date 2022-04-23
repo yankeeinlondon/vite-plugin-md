@@ -6,8 +6,8 @@ exports[`meta() snapshots > HTML is consistent 1`] = `
 <p>{{ byline }}</p>
 </blockquote>
 <p>This is a markdown file intended for testing meta data.</p>
-<p><img src=\\"%7B%7Bimage%7D%7D\\" alt=\\"image\\">
-<img src=\\"{{ image }}\\" /></p>
+<p>
+</p>
 </div>"
 `;
 

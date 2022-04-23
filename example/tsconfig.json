@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "ESNext",
     "target": "es2017",
     "lib": [
@@ -12,13 +13,20 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "types": [
+      "vite/client",
+      "vue/ref-macros",
+      "vite-plugin-vue-layouts/client",
+      "vite-plugin-pages/client"
+    ],
+    "paths": {
+      "~/*": [
+        "src/*"
+      ]
+    }
   },
-  "include": [
-    "src",
-    "test"
-  ],
   "exclude": [
-    "**/dist",
-    "**/node_modules"
+    "dist",
+    "node_modules"
   ]
 }

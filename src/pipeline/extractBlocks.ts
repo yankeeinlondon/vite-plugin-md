@@ -4,7 +4,6 @@ import type {
 import { isVue2, transformer, wrap } from '../utils'
 
 const scriptSetupRE = /<\s*script[^>]*\bsetup\b[^>]*>([\s\S]*)<\/script>/mg
-const defineExposeRE = /defineExpose\s*\(/mg
 
 /**
  * Finds any references to `<script>` blocks and extracts it

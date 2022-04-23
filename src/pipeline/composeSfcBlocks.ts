@@ -18,6 +18,7 @@ import {
   gatherBuilderEvents,
   loadMarkdownItPlugins,
   parseHtml,
+  repairFrontmatterLinks,
   transformsAfter,
   transformsBefore,
   wrapHtml,
@@ -60,6 +61,7 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Options = 
     handlers(PipelineStage.parser),
 
     parseHtml,
+    repairFrontmatterLinks,
     wrapHtml,
     escapeCodeTagInterpolation,
     handlers(PipelineStage.parsed),

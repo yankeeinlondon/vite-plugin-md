@@ -27,7 +27,7 @@ exports[`transform snapshots > head props remains the same 1`] = `
 exports[`transform snapshots > html remains the same 1`] = `
 "<div class=\\"markdown-body\\"><h1>Hello</h1>
 <style>h1 { color: red }</style>
-<script setup lang=\\"ts\\">
+<script lang=\\"ts\\" setup=\\"\\">
 import Foo from './Foo.vue'
 </script>
 <ul>

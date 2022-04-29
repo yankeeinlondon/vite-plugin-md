@@ -7,9 +7,11 @@ export const composeFixture = async(fixture: string, options: Options = {}) => {
     ? fixture
     : `${fixture}.md`
 
+  const md = await getFixture(fixture)
+
   return composeSfcBlocks(
     fixture,
-    (await getFixture(fixture)),
+    md,
     options,
   )
 }

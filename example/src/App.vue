@@ -1,11 +1,9 @@
 <script setup lang="ts">
-const name = "Example App"
+const name = 'Example App'
 </script>
 
 <template>
-  <div class="w-full items-center justify-center">
-    <div class="flex flex-row max-w-5xl relative w-full">
-      <router-view />
-    </div>
+  <div class="w-full items-center justify-center m-0 p-0">
+    <router-view />
   </div>
 </template>

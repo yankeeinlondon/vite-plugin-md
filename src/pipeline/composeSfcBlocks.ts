@@ -19,7 +19,6 @@ import {
   loadMarkdownItPlugins,
   parseHtml,
   repairFrontmatterLinks,
-  transformsAfter,
   transformsBefore,
   wrapHtml,
 } from '../pipeline'
@@ -44,7 +43,7 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Options = 
   const handlers = gatherBuilderEvents(options)
 
   // construct the async pipeline
-  const result = pipe(
+  const result = await pipe(
     payload,
     lift('initialize'),
     transformsBefore,
@@ -70,13 +69,11 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Options = 
     handlers(PipelineStage.sfcBlocksExtracted),
 
     finalize,
-    transformsAfter,
     handlers(PipelineStage.closeout),
-  )
-  const pipeline = await result()
+  )()
 
-  if (isRight(pipeline))
-    return pipeline.right
+  if (isRight(result))
+    return result.right
   else
-    throw new Error(pipeline.left)
+    throw new Error(result.left)
 }

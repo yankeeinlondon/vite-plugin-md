@@ -24,6 +24,8 @@
     "vite-plugin-inspect": "^0.5.0",
     "vite-plugin-md": "workspace:*",
     "vite-plugin-pages": "^0.23.0",
-    "vite-plugin-vue-layouts": "^0.6.0"
+    "vite-plugin-vue-layouts": "^0.6.0",
+    "vite-ssg": "^0.19.2",
+    "vue-tsc": "^0.34.10"
   }
 }

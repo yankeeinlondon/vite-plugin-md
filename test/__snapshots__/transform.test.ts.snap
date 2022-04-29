@@ -60,6 +60,7 @@ exports[`transform snapshots > script blocks remain the same 1`] = `
 </script>
     
 <script>
+  /** frontmatter meta-data for MD page **/
   export const frontmatter = {\\"title\\":\\"transform tests\\",\\"description\\":\\"hello world\\",\\"hello\\":\\"how friendly\\"}
 </script>
     "

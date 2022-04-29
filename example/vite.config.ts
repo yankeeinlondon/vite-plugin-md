@@ -3,16 +3,14 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import Inspect from 'vite-plugin-inspect'
 import Layouts from 'vite-plugin-vue-layouts'
-import Markdown from 'vite-plugin-md'
+import Markdown, { link, meta } from 'vite-plugin-md'
 import Pages from 'vite-plugin-pages'
 import prism from 'markdown-it-prism'
 import Unocss from 'unocss/vite'
 import Vue from '@vitejs/plugin-vue'
-import type { UserConfig } from 'vite'
+import { defineConfig } from 'vite'
 
-const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
-
-const config: UserConfig = {
+const config = defineConfig({
   resolve: {
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
@@ -20,16 +18,10 @@ const config: UserConfig = {
   },
   plugins: [
     Vue({
-      include: ['/\.vue$/, /\.md$/'],
+      include: [/\.vue$/, /\.md$/],
       reactivityTransform: true,
     }),
-    Markdown({
-      wrapperClasses: markdownWrapperClasses,
-      headEnabled: true,
-      markdownItUses: [
-        prism,
-      ],
-    }),
+
     // https://github.com/hannoeru/vite-plugin-pages
     Pages({
       // pagesDir: 'src/pages',
@@ -39,7 +31,7 @@ const config: UserConfig = {
     Layouts(),
 
     AutoImport({
-      imports: ['vue', 'vue-router', '@vueuse/head', '@vueuse/core', 'vue/macros'],
+      imports: ['vue', 'vue-router', '@vueuse/head', '@vueuse/core'],
       dts: 'src/auto-imports.d.ts',
     }),
     Components({
@@ -52,8 +44,16 @@ const config: UserConfig = {
     }),
     Unocss(),
 
+    Markdown({
+      headEnabled: true,
+      markdownItUses: [
+        prism,
+      ],
+      builders: [meta(), link()],
+    }),
+
     Inspect(),
   ],
-}
+})
 
 export default config

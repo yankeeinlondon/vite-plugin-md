@@ -1,10 +1,16 @@
-import type { ComponentOptions } from 'vue'
-declare module '*.vue' {
-  const Component: ComponentOptions
-  export default Component
+declare interface Window {
+  // extend the window
 }
 
+// with vite-plugin-md, markdowns can be treat as Vue components
 declare module '*.md' {
-  const Component: ComponentOptions
-  export default Component
+  import { type DefineComponent } from 'vue'
+  const component: DefineComponent<{}, {}, any>
+  export default component
+}
+
+declare module '*.vue' {
+  import { type DefineComponent } from 'vue'
+  const component: DefineComponent<{}, {}, any>
+  export default component
 }

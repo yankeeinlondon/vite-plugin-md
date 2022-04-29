@@ -5,15 +5,20 @@ meta:
     content: Hello World
 test: test
 ---
+
+
+
 # Hello world!
 
-Frontmatter: {{ frontmatter }}
-
-Code: `{{ frontmatter }}`
-
-Code Block:
-```
+Front matter: 
+```!json
 {{ frontmatter }}
+```
+
+```json
+{
+  "foo": "bar"
+}
 ```
 
 <style>
@@ -22,9 +27,12 @@ h1 {
 }
 </style>
 
-<br>
-<!-- <Counter2 /> -->
 
+<Counter />
+<br>
+<Counter />
+
+<router-link to="/">Home</router-link>
 
 <route>
 {

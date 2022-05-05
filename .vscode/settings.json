@@ -2,7 +2,19 @@
   "prettier.enable": false,
   "prettier": false,
   "editor.codeActionsOnSave": {
+
     "source.fixAll": true
   },
-  "eslint.validate": ["typescript"]
+  "eslint.validate": [
+    "typescript"
+  ],
+  "cSpell.words": [
+    "klass",
+    "prefetch",
+    "Shiki",
+    "Vite",
+    "vitepress",
+    "vitest",
+    "vuepress"
+  ]
 }

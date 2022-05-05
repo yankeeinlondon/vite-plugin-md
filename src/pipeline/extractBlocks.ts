@@ -1,3 +1,4 @@
+import { toHtml } from 'happy-wrapper'
 import type {
   ResolvedOptions,
 } from '../types'
@@ -39,9 +40,11 @@ function extractCustomBlock(html: string, options: ResolvedOptions) {
  * Converts the markdown content to an HTML template and extracts both
  * the HTML and scripts.
  */
-export const extractBlocks = transformer('extractBlocks', 'parsed', 'sfcBlocksExtracted', (payload) => {
+export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtracted', (payload) => {
   // eslint-disable-next-line prefer-const
-  let { html, options, frontmatter, head, routeMeta } = payload
+  let { options, frontmatter, head, routeMeta } = payload
+  /** HTML converted back to a string */
+  let html = toHtml(payload.html)
   // extract script blocks, adjust HTML
   const hoistScripts = extractScriptBlocks(html)
   html = hoistScripts.html
@@ -90,5 +93,5 @@ export const extractBlocks = transformer('extractBlocks', 'parsed', 'sfcBlocksEx
   ].filter(i => i).join('\n  '))}
     ${blocks.routeMeta}`
 
-  return { ...payload, hoistedScripts, templateBlock, scriptBlock, customBlocks }
+  return { ...payload, html, hoistedScripts, templateBlock, scriptBlock, customBlocks }
 })

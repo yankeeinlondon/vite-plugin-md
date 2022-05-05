@@ -7,12 +7,12 @@ import { composeSfcBlocks } from '../src/pipeline'
 
 let md = ''
 
-describe('use "meta" builder for frontmatterPreprocess', async() => {
-  beforeAll(async() => {
+describe('use "meta" builder for frontmatterPreprocess', async () => {
+  beforeAll(async () => {
     md = await readFile('test/fixtures/meta.md', 'utf-8')
   })
 
-  it('with no config, doc props all available as frontmatter props and other meta props get default mapping', async() => {
+  it('with no config, doc props all available as frontmatter props and other meta props get default mapping', async () => {
     const sfc = await composeSfcBlocks('', md, { builders: [meta()] })
 
     expect(sfc.frontmatter.title).toEqual('Metadata Rules')
@@ -26,7 +26,7 @@ describe('use "meta" builder for frontmatterPreprocess', async() => {
     expect(sfc.meta.find(p => p.key === 'image')).toBeDefined()
   })
 
-  it('default value is used when no frontmatter is present', async() => {
+  it('default value is used when no frontmatter is present', async () => {
     const options: Options = {
       builders: [
         meta({
@@ -55,7 +55,7 @@ describe('use "meta" builder for frontmatterPreprocess', async() => {
     ).toBeDefined()
   })
 
-  it('frontmatter props exported', async() => {
+  it('frontmatter props exported', async () => {
     const output = (await composeSfcBlocks('', md)).component
 
     expect(output.includes('const title')).toBeTruthy()
@@ -69,27 +69,27 @@ describe('use "meta" builder for frontmatterPreprocess', async() => {
   })
 })
 
-describe('meta() snapshots', async() => {
-  beforeAll(async() => {
+describe('meta() snapshots', async () => {
+  beforeAll(async () => {
     md = await readFile('test/fixtures/meta.md', 'utf-8')
   })
 
-  it('frontmatter is consistent', async() => {
+  it('frontmatter is consistent', async () => {
     const { frontmatter } = await composeSfcBlocks('/foobar/meta.md', md)
     expect(frontmatter).toMatchSnapshot()
   })
 
-  it('HTML is consistent', async() => {
+  it('HTML is consistent', async () => {
     const { html } = await composeSfcBlocks('/foobar/meta.md', md)
     expect(html).toMatchSnapshot()
   })
 
-  it('script blocks are consistent', async() => {
+  it('script blocks are consistent', async () => {
     const { scriptBlock } = await composeSfcBlocks('/foobar/meta.md', md)
     expect(scriptBlock).toMatchSnapshot()
   })
 
-  it('custom blocks are consistent', async() => {
+  it('custom blocks are consistent', async () => {
     const { customBlocks } = await composeSfcBlocks('/foobar/meta.md', md)
     expect(customBlocks).toMatchSnapshot()
   })

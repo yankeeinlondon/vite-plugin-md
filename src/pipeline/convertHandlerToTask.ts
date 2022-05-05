@@ -53,7 +53,7 @@ export const getBuilderTask = <S extends IPipelineStage>(
     // )
     // }
 
-    const asyncApi = async(payload: Pipeline<S>) => {
+    const asyncApi = async (payload: Pipeline<S>) => {
       for (const b of builders) {
         try {
           payload = await b.handler(payload, b.options)

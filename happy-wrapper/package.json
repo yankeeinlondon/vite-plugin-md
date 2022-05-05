@@ -1,0 +1,26 @@
+{
+  "name": "happy-wrapper",
+  "version": "0.1.0",
+  "description": "A wrapper around the HappyDOM which makes it more functional in signature and provides some helpful utilities beyond the DOM implementation",
+  "main": "dist/index.js",
+  "module": "dist/main.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "author": "Ken Snyder <ken@ken.net>",
+  "license": "ISC",
+  "dependencies": {
+    "fp-ts": "^2.12.1",
+    "happy-dom": "^3.1.0",
+    "tsup": "^5.12.6"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^0.10.2",
+    "vitest": "^0.10.2"
+  }
+}

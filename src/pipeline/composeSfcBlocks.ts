@@ -1,4 +1,4 @@
-import { pipe } from 'fp-ts/lib/function'
+import { flow, pipe } from 'fp-ts/lib/function'
 import { isRight } from 'fp-ts/lib/Either'
 import { resolveOptions } from '../options'
 import { PipelineStage } from '../types'
@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import {
   applyMarkdownItOptions,
+  convertToDom,
   createParser,
   escapeCodeTagInterpolation,
   extractBlocks,
@@ -42,28 +43,57 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Options = 
 
   const handlers = gatherBuilderEvents(options)
 
-  // construct the async pipeline
-  const result = await pipe(
-    payload,
+  /** initialize the configuration */
+  const initialize = flow(
     lift('initialize'),
     transformsBefore,
-
     handlers(PipelineStage.initialize),
+  )
 
+  /** extract the meta-data from the MD content */
+  const metaExtracted = flow(
     extractFrontmatter,
     frontmatterPreprocess,
     handlers(PipelineStage.metaExtracted),
+  )
 
+  /** establish the MarkdownIt parser */
+  const parser = flow(
     createParser,
     loadMarkdownItPlugins,
     applyMarkdownItOptions,
     handlers(PipelineStage.parser),
+  )
 
+  /**
+   * use MarkdownIt to produce HTML
+   */
+  const parsed = flow(
     parseHtml,
     repairFrontmatterLinks,
     wrapHtml,
-    escapeCodeTagInterpolation,
     handlers(PipelineStage.parsed),
+  )
+
+  /**
+   * Convert HTML to DOM structure to make certain mutations
+   * easier to perform.
+   */
+  const dom = flow(
+    convertToDom,
+    escapeCodeTagInterpolation,
+    handlers(PipelineStage.dom),
+  )
+
+  // construct the async pipeline
+  const result = await pipe(
+    payload,
+
+    initialize,
+    metaExtracted,
+    parser,
+    parsed,
+    dom,
 
     extractBlocks,
     handlers(PipelineStage.sfcBlocksExtracted),

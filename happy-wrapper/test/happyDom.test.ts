@@ -1,33 +1,30 @@
-import { pipe } from 'fp-ts/lib/function'
+import { constVoid, flow, pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
-import type { DocRoot } from '../src/builders/code/types'
 import {
   addClass,
   changeTagName,
+  clone,
   createDocument,
   createElementNode,
   createFragment,
   createTextNode,
-  getAttribute,
   getChildren,
+  getClassList,
   getNodeType,
   inspect,
   into,
   isElementLike,
   nodeBoundedByElements,
   nodeChildrenAllElements,
-  prettyPrint,
   removeClass,
+  replaceElement,
   safeString,
   select,
   setAttribute,
   tab,
   toHtml,
-  tree,
   wrap,
-} from '../src/builders/code/utils/happyDom'
-
-const getClass = (node: DocRoot | string) => getAttribute('class')(node).split(/\s+/).filter(i => i)
+} from '../src'
 
 const tokenizedCode = `
 <span class="line"><span class="token keyword">type</span> <span class="token class-name">Valid</span> <span class="token operator">=</span> <span class="token string">'foo'</span> <span class="token operator">|</span> <span class="token string">'bar'</span> <span class="token operator">|</span> <span class="token string">'baz'</span></span>
@@ -131,30 +128,52 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(nodeBoundedByElements(frag5)).toBeTruthy()
     expect(nodeChildrenAllElements(frag5)).toBeFalsy()
 
-    const tnode = createTextNode('hello')
-    expect(tnode.hasChildNodes()).toBeFalsy()
+    const textNode = createTextNode('hello')
+    expect(textNode.hasChildNodes()).toBeFalsy()
   })
 
-  it('changeTag() utility works as expected', () => {
+  it('changeTag() utility works as expected atomically with different container types', () => {
     const html = '<span class="foobar">hello world</span>'
+    const toDiv = changeTagName('div')
     // html
-    expect(
-      changeTagName('div')(html),
-    ).toBe(
-      '<div class="foobar">hello world</div>',
-    )
+    expect(toDiv(html)).toBe('<div class="foobar">hello world</div>')
     // element
-    expect(
-      toHtml(changeTagName('div')(createElementNode(html))),
-    ).toBe(
-      '<div class="foobar">hello world</div>',
-    )
+    expect(toHtml(toDiv(createElementNode(html)))).toBe('<div class="foobar">hello world</div>')
     // fragment
-    expect(
-      toHtml(changeTagName('div')(createFragment(html))),
-    ).toBe(
-      '<div class="foobar">hello world</div>',
-    )
+    const f1 = createFragment(html)
+    const f = toDiv(f1)
+    expect(toHtml(f)).toBe('<div class="foobar">hello world</div>')
+  })
+
+  it('replaceElement() can replace an element while preserving parental relationship', () => {
+    const html = '<div class="parent"><span class="foobar">hello world</span></div>'
+    const onlySpan = html.replace(/div/g, 'span')
+    const onlyDiv = html.replace(/span/g, 'div')
+    const outside = replaceElement(createElementNode(html))(createElementNode(onlySpan))
+    // basic replacement where parent is not defined
+    expect(toHtml(outside), onlySpan)
+
+    const parent = createElementNode(html)
+    const staticReplacement = createElementNode('<div class="foobar">hello world</div>')
+    const toDiv = changeTagName('div')
+    const interior = select(clone(parent))
+      .updateAll('.foobar')(el => el.replaceWith(staticReplacement))
+      .toContainer()
+    expect(toHtml(interior)).toBe(onlyDiv)
+
+    const interior2 = select(clone(parent))
+      .updateAll('.foobar')(el => el.replaceWith(toDiv(el)))
+      .toContainer()
+    expect(toHtml(interior2)).toBe(onlyDiv)
+  })
+
+  it('changeTag() can preserve parent node', () => {
+    const toDiv = changeTagName('div')
+    expect(toDiv('<span class="foobar">hello world</span>')).toBe('<div class="foobar">hello world</div>')
+
+    const html = '<div class="parent"><span class="foobar">hello world</span></div>'
+    const updated = select(html).updateAll('.foobar')(toDiv).toContainer()
+    expect(updated).toBe('<div class="parent"><div class="foobar">hello world</div></div>')
   })
 
   it('select() utility\'s find functionality', () => {
@@ -176,7 +195,7 @@ describe('HappyDom\'s can be idempotent', () => {
     </div>
     `
     const updated = select(html)
-      .updateAll('.line')(el => (changeTagName('div')(el)))
+      .updateAll('.line')(changeTagName('div'))
       .toContainer()
     const found = select(updated).findAll('.line')
 
@@ -185,14 +204,55 @@ describe('HappyDom\'s can be idempotent', () => {
     tags.forEach(t => expect(t).toBe('div'))
   })
 
-  it('prettyPrint()', () => {
-    const html = '<div class="wrapper"><span>one</span><span>two</span></div>'
-    const expected = `\n<div class="wrapper">\n${tab(1)}<span>\n${tab(2)}one\n${tab(1)}</span>\n${tab(1)}<span>\n${tab(2)}two\n${tab(1)}</span>\n</div>\n`
+  it('update() and updateAll() utility works as expected', () => {
+    const html = `
+    <div class="wrapper">
+      <span class="line line-1">1</span>
+      <span class="line line-2">2</span>
+      <span class="line line-3">3</span>
+    </div>
+    `
+    const toDiv = changeTagName('div')
+    const toTable = changeTagName('table')
+    const toTR = changeTagName('tr')
 
-    expect(
-      prettyPrint()(html),
-      `prettyPrinting a basic DOM resulted in: ${prettyPrint()(html)}`,
-    ).toBe(expected)
+    const selector = select(html)
+
+    const updatedViaReplacement = select(html)
+      .updateAll('.line')(toDiv)
+      .toContainer()
+
+    expect(updatedViaReplacement).toBe(html.replace(/span/g, 'div'))
+
+    const updatedViaTree = selector
+      .updateAll('.line')(flow(toDiv, constVoid))
+      .toContainer()
+
+    expect(updatedViaTree).toBe(html.replace(/span/g, 'div'))
+
+    const table = select(html)
+      .update('.wrapper')(toTable)
+      .updateAll('.line')(toTR)
+      .toContainer()
+
+    expect(table).toBe(`
+    <table class="wrapper">
+      <tr class="line line-1">1</tr>
+      <tr class="line line-2">2</tr>
+      <tr class="line line-3">3</tr>
+    </table>
+    `)
+
+    // test other containers
+    const updatedFrag = select(createFragment(html))
+      .updateAll('.line')(toDiv)
+      .toContainer()
+    expect(toHtml(updatedFrag)).toBe(html.replace(/span/g, 'div'))
+
+    const updatedElement = select(createElementNode(html.trim()))
+      .updateAll('.line')(toDiv)
+      .toContainer()
+    expect(toHtml(updatedElement)).toBe(html.trim().replace(/span/g, 'div'))
   })
 
   it('createFragment() utility', () => {
@@ -247,99 +307,25 @@ describe('HappyDom\'s can be idempotent', () => {
     ).toBe(`<div class="wrapper">${html}</div>`)
   })
 
-  it('wrap() utility can add text around using before/after and indent', () => {
-    const wrapper = '<div class="wrapper"><span>one</span><span>two</span></div>'
-
-    const html = '<span>foobar</span>'
-    const text = 'foobar'
-    const siblings = '<span>one</span><span>two</span><span>three</span>'
-    const middling = '<span>one</span>two<span>three</span>'
-    const hybrid = 'hey ho<span>\nlet\'s go\n</span>'
-
-    // HTML wraps before/after
-    expect(
-      pipe(wrapper, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${wrapper}after`)
-    expect(
-      pipe(html, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${html}after`)
-    expect(
-      pipe(text, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${text}after`)
-    expect(
-      pipe(siblings, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${siblings}after`)
-    expect(
-      pipe(middling, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${middling}after`)
-    expect(
-      pipe(hybrid, wrap({ before: 'before', after: 'after' })),
-    ).toBe(`before${hybrid}after`)
-
-    // before, after, open, close
-    const w_wrapper = pipe(wrapper, wrap({
-      before: 'before\n',
-      after: '\nafter',
-      open: '\n',
-      close: '\n',
-    }))
-
-    expect(
-      w_wrapper,
-      `fragment wrapped HTML was:\n"${w_wrapper}"\n\n`,
-    ).toBe(
-      'before\n<div class="wrapper">\n<span>one</span><span>two</span>\n</div>\nafter',
-    )
-    // before, after, open, close with Element originating
-    const el = createElementNode(wrapper)
-    const p = createFragment('')
-    const wrapped = wrap({
-      before: 'before\n',
-      after: '\nafter',
-      open: '\n',
-      close: '\n',
-    })(el, p)
-
-    expect(
-      toHtml(wrapped),
-      'an element with a parent will mutate to take on open/close; the before/after effects are pushed to parent',
-    ).toBe(
-      '<div class="wrapper">\n<span>one</span><span>two</span>\n</div>',
-    )
-    expect(
-      toHtml(p),
-      'the fake parent element passed in captures the before/after',
-    ).toBe('before\n\nafter')
-
-    // indents
-    expect(
-      wrap({ indent: 2 })(html),
-    ).toBe(`${tab(2)}${html}`)
-
-    expect(
-      wrap({ open: '\n', close: '\n', indent: 2 })(html),
-      'when a "close" wrap is provided, it gets indentation too',
-    ).toBe(`${tab(2)}<span>\nfoobar\n${tab(2)}</span>`)
-  })
-
-  it('wrap() works with fragment wrapper', () => {
+  it('wrap() works as expected', () => {
     const html = '<span>foobar</span>'
     const text = 'foobar'
     const siblings = '<span>one</span><span>two</span><span>three</span>'
     const middling = '<span>one</span>two<span>three</span>'
     const wrapper = createFragment('<div class="wrapper" />')
 
-    const w1 = wrap(wrapper)(html)
-    expect(w1).toBe(`<div class="wrapper">${html}</div>`)
+    const wrapHtml = wrap(html)
+    const w1 = wrapHtml(clone(wrapper))
+    expect(toHtml(w1)).toBe(`<div class="wrapper">${html}</div>`)
 
-    const w2 = wrap(wrapper)(text)
-    expect(w2).toBe(`<div class="wrapper">${text}</div>`)
+    const w2 = wrap(text)(clone(wrapper))
+    expect(toHtml(w2)).toBe(`<div class="wrapper">${text}</div>`)
 
-    const w3 = wrap(wrapper)(siblings)
-    expect(w3).toBe(`<div class="wrapper">${siblings}</div>`)
+    const w3 = wrap(siblings)(clone(wrapper))
+    expect(toHtml(w3)).toBe(`<div class="wrapper">${siblings}</div>`)
 
-    const w4 = wrap(wrapper)(middling)
-    expect(w4).toBe(`<div class="wrapper">${middling}</div>`)
+    const w4 = wrap(middling)(clone(wrapper))
+    expect(toHtml(w4)).toBe(`<div class="wrapper">${middling}</div>`)
   })
 
   it('setAttribute() utility', () => {
@@ -353,51 +339,64 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(toHtml(html2)).toBe('<span class="foo">foo</span>')
   })
 
+  const addOne = addClass('one')
+  const addTwo = addClass('two')
+
   it('addClass() utility is able to add a class to the top-most node in Document', () => {
     const html = '<div class="foobar">testing</div>'
-    const frag = createFragment(html)
-    const plusOne = pipe(frag, addClass('one'))
-    const plusOneAlt = pipe(html, addClass('one'))
+    const doc = createDocument(html)
+    const plusOne = pipe(doc, addOne)
+    const plusTwo = pipe(clone(plusOne), addTwo)
 
-    const plusTwo = pipe(plusOne, addClass('two'))
-    const plusTwoAlt = pipe(plusOneAlt, addClass('two'))
+    expect(pipe(plusOne, getClassList), `Class list from Frag input is: ${pipe(plusOne, getClassList)}`).length(2)
+    expect(pipe(plusOne, getClassList)).contains('one')
+    expect(pipe(plusOne, getClassList)).not.contains('two')
 
-    expect(pipe(plusOne, getClass), `Class list from Frag input is: ${pipe(plusOne, getClass)}`).length(2)
-    expect(pipe(plusOne, getClass)).contains('one')
-    expect(pipe(plusOne, getClass)).not.contains('two')
-    expect(pipe(plusOneAlt, getClass), `Class list from HTML input is: "${pipe(plusOneAlt, getClass)}"`).length(2)
-    expect(pipe(plusOneAlt, getClass)).contains('one')
-    expect(pipe(plusOneAlt, getClass)).not.contains('two')
-
-    expect(pipe(plusTwo, getClass)).length(3)
-    expect(pipe(plusTwo, getClass)).contains('one')
-    expect(pipe(plusTwo, getClass)).contains('two')
-    expect(pipe(plusTwoAlt, getClass)).length(3)
-    expect(pipe(plusTwoAlt, getClass)).contains('one')
-    expect(pipe(plusTwoAlt, getClass)).contains('two')
+    expect(pipe(plusTwo, getClassList)).length(3)
+    expect(pipe(plusTwo, getClassList)).contains('one')
+    expect(pipe(plusTwo, getClassList)).contains('two')
   })
 
   it('addClass() utility is able to add a class to the top-most node in DocumentFragment', () => {
-    const starting = createFragment('<div class="foobar">testing</div>')
-    const plusOne = pipe(starting, addClass('one'))
-    const plusTwo = pipe(plusOne, addClass('two'))
+    const html = '<div class="foobar">testing</div>'
+    const frag = createFragment(html)
+    const plusOne = pipe(frag, addOne)
+    const plusTwo = pipe(clone(plusOne), addTwo)
 
-    expect(pipe(plusOne, getClass)).length(2)
-    expect(pipe(plusOne, getClass)).contains('one')
-    expect(pipe(plusOne, getClass)).not.contains('two')
+    expect(pipe(plusOne, getClassList), `Class list from Frag input is: ${pipe(plusOne, getClassList)}`).length(2)
+    expect(pipe(plusOne, getClassList)).contains('one')
+    expect(pipe(plusOne, getClassList)).not.contains('two')
 
-    expect(pipe(plusTwo, getClass)).length(3)
-    expect(pipe(plusTwo, getClass)).contains('one')
-    expect(pipe(plusTwo, getClass)).contains('two')
+    expect(pipe(plusTwo, getClassList)).length(3)
+    expect(pipe(plusTwo, getClassList)).contains('one')
+    expect(pipe(plusTwo, getClassList)).contains('two')
   })
 
-  it('removeClassToDoc utility removes classes from DOM tree', () => {
-    const starting = createFragment('<div class=\'foobar\'>testing</div>')
-    const falseFlag = pipe(starting, removeClass('one'))
-    const empty = pipe(falseFlag, removeClass('foobar'))
+  it('addClass() utility is able to add a class to the top-most node in an IElement', () => {
+    const html = '<div class="foobar">testing</div>'
+    const el = createElementNode(html)
+    const plusOne = pipe(el, addOne)
+    const plusTwo = pipe(clone(plusOne), addTwo)
 
-    expect(pipe(falseFlag, getClass)).toContain('foobar')
-    expect(pipe(empty, getClass)).lengthOf(0)
+    expect(pipe(plusOne, getClassList)).length(2)
+    expect(pipe(plusOne, getClassList)).contains('one')
+    expect(pipe(plusOne, getClassList)).not.contains('two')
+
+    expect(pipe(plusTwo, getClassList)).length(3)
+    expect(pipe(plusTwo, getClassList)).contains('one')
+    expect(pipe(plusTwo, getClassList)).contains('two')
+  })
+
+  it('removeClass() utility removes classes from DOM tree', () => {
+    const starting = createFragment('<div class="foobar">testing</div>')
+    const removeFoobar = removeClass('foobar')
+    const removeOne = removeClass('one')
+
+    const stillStanding = pipe(starting, removeOne)
+    const empty = pipe(clone(stillStanding), removeFoobar)
+
+    expect(pipe(stillStanding, getClassList)).toContain('foobar')
+    expect(pipe(empty, getClassList)).lengthOf(0)
   })
 
   it('safeString', () => {

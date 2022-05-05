@@ -1,6 +1,5 @@
+import { getClassList, select } from 'happy-wrapper'
 import { transformer } from '../utils'
-
-const codeTagRe = /<code([^>]*language-([!]{0,1})(\w+)[^>]*>)/g
 
 /**
  * Modifies the HTML based on the configuration of `options.
@@ -11,35 +10,33 @@ const codeTagRe = /<code([^>]*language-([!]{0,1})(\w+)[^>]*>)/g
  * the payload being passed through as this could be valuable for _search_
  * or other meta features.
  */
-export const escapeCodeTagInterpolation = transformer('escapeCodeTagInterpolation', 'parsed', 'parsed', (payload) => {
-  const { options: { escapeCodeTagInterpolation }, html, fencedLanguages } = payload
-  const replacements = new Map()
+export const escapeCodeTagInterpolation = transformer(
+  'escapeCodeTagInterpolation',
+  'dom', 'dom',
+  (payload) => {
+    const { options: { escapeCodeTagInterpolation, builders }, html: dom } = payload
+    const codeBuilderPresent = !builders.find(b => b.name === 'code')
 
-  const match = html.matchAll(codeTagRe)
+    const html = codeBuilderPresent
+      ? select(dom)
+        .updateAll('code')((el) => {
+          const lang = getClassList(el).find(c => c.startsWith('language-'))
+          if (lang) {
+            const hasNegation = lang.includes('!')
+            const shouldSetVPre = (escapeCodeTagInterpolation && !hasNegation) || (!escapeCodeTagInterpolation && hasNegation)
 
-  // identify targets for interpolation in <code>, #14
-  for (const m of match) {
-    // eslint-disable-next-line prefer-const
-    let [, codeTag, negation, lang] = m
-    console.log({ codeTag, negation, lang })
+            if (shouldSetVPre)
+              el.parentElement.setAttribute('v-pre', 'true')
 
-    if (
-      (escapeCodeTagInterpolation && !negation)
-      || (!escapeCodeTagInterpolation && negation)
-    ) {
-      replacements.set(codeTag, codeTag.replace('>', ' v-pre>'))
-      replacements.set(codeTag, codeTag.replace(`!${lang}`, `${lang}`))
-    }
+            const classes = [...getClassList(el).filter(i => i !== lang), lang.replace('!', '')]
 
-    if (lang)
-      fencedLanguages.add(lang)
-  }
+            el.setAttribute('class', classes.join(' '))
+            payload.fencedLanguages.add(lang.replace('!', ''))
+          }
+        })
+        .toContainer()
+      // if code() builder is in place you can skip these transforms as this will be handled there
+      : dom
 
-  // iterate over interpolation replacements
-  let updated: string = html
-
-  for (const [before, after] of replacements)
-    updated = updated.replace(new RegExp(before, 'g'), after)
-
-  return { ...payload, html: updated, fencedLanguages }
-})
+    return { ...payload, html }
+  })

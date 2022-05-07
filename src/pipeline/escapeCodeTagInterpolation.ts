@@ -1,4 +1,4 @@
-import { describe, getClassList, select } from 'happy-wrapper'
+import { getClassList, select, setAttribute } from 'happy-wrapper'
 import { transformer } from '../utils'
 
 /**
@@ -14,36 +14,35 @@ export const escapeCodeTagInterpolation = transformer(
   'escapeCodeTagInterpolation',
   'dom', 'dom',
   (payload) => {
-    const { options: { escapeCodeTagInterpolation, builders }, html: dom } = payload
-    const codeBuilderPresent = !!builders.find(b => b.name === 'code')
+    const { options: { escapeCodeTagInterpolation, usingBuilder }, html: dom } = payload
+    const addVPre = setAttribute('v-pre')('true')
 
-    const html = codeBuilderPresent
-      // if code() builder is in place you can skip these transforms as this will be handled there
+    const html = usingBuilder('code')
       ? dom
       : select(dom)
-        .updateAll('code')((el) => {
-          const lang = getClassList(el).find(c => c.startsWith('language-'))
+      // add "v-pre" to pre tag where appropriate
+        .updateAll('pre')((pre) => {
+          const code = select(pre).findFirst('code', 'no <code> block found in <pre>!')
+          const lang = getClassList(code).find(c => c.startsWith('language-'))
           if (lang) {
             const hasNegation = lang.includes('!')
             const shouldSetVPre = (escapeCodeTagInterpolation && !hasNegation)
             || (!escapeCodeTagInterpolation && hasNegation)
 
-            if (shouldSetVPre) {
-              if (el.parentElement)
-                el.parentElement.setAttribute('v-pre', 'true')
-              else
-                throw new Error(`Problem setting the parent element of the "code" tag -- which was intended to be the "pre" tag -- as the code tag does not have a parent: ${describe(el.parentElement)}`)
-            }
-
-            const classes = [
-              ...getClassList(el).filter(i => i !== lang),
-              lang.replace('!', ''),
-            ]
-
-            el.setAttribute('class', classes.join(' '))
-            payload.fencedLanguages.add(lang.replace('!', ''))
+            if (shouldSetVPre)
+              return addVPre(pre)
           }
-          return el
+          return pre
+        })
+        // remove ! modifier from code tag
+        .updateAll('code')((code) => {
+          setAttribute('class')(
+            getClassList(code).map(klass =>
+              klass.startsWith('language-') ? klass.replace('!', '') : klass,
+            ).join(' '),
+          )(code)
+
+          return code
         })
         .toContainer()
 

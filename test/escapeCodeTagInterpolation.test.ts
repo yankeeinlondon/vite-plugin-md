@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getAttribute, select } from 'happy-wrapper'
+import { getAttribute, select, toHtml } from 'happy-wrapper'
 import { code } from '../src'
 import { composeFixture, importFixture } from './utils'
 
 describe('escapeCodeTagInterpolation()', () => {
-  it.only('default is to turn on tag interpolation', async () => {
+  it('default is to turn on tag interpolation', async () => {
     const sfc = await composeFixture('escape-on.md')
 
     const sel = select(sfc.html)
@@ -58,24 +58,14 @@ describe('escapeCodeTagInterpolation()', () => {
     expect(sfc.html).toContain('language-handlebars')
     expect(sfc.html).not.toContain('language-!handlebars')
 
-    expect(getVPre(pre[0]), `The pre tag should have had a v-pre directive: ${pre[0]}`).toBeTruthy()
-    expect(getVPre(pre[1]), `The pre tag should NOT have had a v-pre directive: ${pre[1]}`).toBeFalsy()
+    expect(
+      getVPre(pre[0]), `The pre tag should have had a v-pre directive: ${pre[0]}`,
+    ).toBeTruthy()
+    expect(
+      getVPre(pre[1]), `The pre tag should NOT have had a v-pre directive: ${pre[1]}`,
+    ).toBeFalsy()
 
     expect(getDataLang(pre[0]), `data-lang should have been vue: ${getDataLang(pre[0])}`).toBe('vue')
     expect(getDataLang(pre[1]), `data-lang should have been vue: ${getDataLang(pre[0])}`).toBe('vue')
-  })
-
-  it.skip('with code() builder excluded, a code block will interpolate variables inside curly braces', async () => {
-    const MdComponent = await importFixture('escape-on')
-    const fm = MdComponent.frontmatter
-
-    const wrapper = {
-      components: { MdComponent: MdComponent.default },
-      template: '<div><MdComponent>foobar</MdComponent></div>',
-    }
-    // eslint-disable-next-line no-console
-    console.log({ fm, wrapper })
-
-    // const mounted = mount(wrapper)
   })
 })

@@ -5,7 +5,7 @@ import { inspect } from './diagnostics'
 import { isHappyWrapperError, isInspectionTuple } from './type-guards'
 
 const showCallsite = (cs: CallSite | undefined) => cs
-  ? `\n  - ${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() || ''}${relative(process.cwd(), cs.getFileName() || '')}:${cs.getLineNumber() || '-'}`
+  ? `\n  - ${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() || ''}${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() ? '(), ' : ''}${relative(process.cwd(), cs.getFileName() || '')}:${cs.getLineNumber() || ''}`
   : ''
 
 export class HappyMishap extends Error {

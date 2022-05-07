@@ -55,6 +55,7 @@ exports[`exposeFrontmatter snapshots > vue3 (no expose) 1`] = `
 
 <script setup>
   
+  
  const title = \\"Hello World\\"
  const description = \\"testing is the path to true happiness\\"
  const excerpt = undefined
@@ -77,6 +78,7 @@ exports[`exposeFrontmatter snapshots > vue3 1`] = `
 </template>
 
 <script setup>
+  
   defineExpose({ frontmatter: {\\"title\\":\\"Hello World\\",\\"description\\":\\"testing is the path to true happiness\\"} })
   
  const title = \\"Hello World\\"

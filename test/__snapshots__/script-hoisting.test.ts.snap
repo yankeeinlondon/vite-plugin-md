@@ -10,7 +10,7 @@ exports[`hoisted script blocks > snapshot of component section remains the same 
 <p>Furthermore we can add a script setup block like this:</p>
 
 <p>And now the function we’ve defined can be used: {{ sayHi(‘Foo’) }}</p>
-<p>This doesn’t just apply to <code>&lt;script setup&gt;</code> blocks but also more traditional <code>&lt;script&gt;</code> blocks too:</p>
+<p>This doesn’t just apply to <code class=\\"\\">&lt;script setup&gt;</code> blocks but also more traditional <code class=\\"\\">&lt;script&gt;</code> blocks too:</p>
 
 <p>The traditional <em>script blocks</em> can appear multiple times, and even use different languages without incident. These blocks will be maintained as separate blocks in the resulting SFC component.</p>
 

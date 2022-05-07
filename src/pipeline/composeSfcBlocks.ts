@@ -26,10 +26,10 @@ import {
 import { lift } from '../utils'
 
 /**
- * Composes the `template` and `script` blocks, along with any other `customBlocks` from the raw
- * markdown content along with user options.
+ * Composes the `template` and `script` blocks, along with any other `customBlocks` from
+ * the raw markdown content along with user options.
  */
-export async function composeSfcBlocks(id: string, raw: string, opts: Options = {}, config: Partial<ViteConfigPassthrough> = {}) {
+export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Options, 'usingBuilder'> = {}, config: Partial<ViteConfigPassthrough> = {}) {
   const options = resolveOptions(opts)
   /**
    * The initial pipeline state

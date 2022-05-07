@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getAttribute, select } from '../src/builders/code/utils'
+import { getAttribute, select } from 'happy-wrapper'
 import { composeFixture } from './utils'
 
 const alt = getAttribute('alt')

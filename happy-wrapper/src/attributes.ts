@@ -100,20 +100,20 @@ export const removeClass = <R extends string | string[]>(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export type AddClass<A extends string | string[]> = <C extends DocRoot | IElement | HTML>(container: C) => C
+export type AddClass<A extends string[] | string[][]> = <C extends DocRoot | IElement | HTML>(container: C) => C
 
 /**
  * Adds a class to the top level node of a document's body.
  */
-export const addClass = <A extends string | string[]>(
-  add: A,
+export const addClass = <A extends string[] | string[][]>(
+  ...add: A
 ): AddClass<A> => <D extends DocRoot | IElement | HTML>(doc: D): D => {
-  const toAdd = Array.isArray(add) ? add : [add]
+  const toAdd = (Array.isArray(add) ? add.flat() : [add]) as string[]
 
   const currentClasses = getClass(doc)?.split(/\s+/g) || []
   const resultantClasses = Array.from(new Set<string>([...currentClasses, ...toAdd]))
 
-  return setClass(resultantClasses.join(' ').trim())(doc)
+  return setClass(resultantClasses.join(' ').trim())(doc) as D
 }
 
 export type Filter = (string | RegExp)

@@ -12,21 +12,23 @@ import { Modifier } from '../types'
 export const updateCodeBlockWrapper = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
   (fence: CodeBlockMeta<'dom'>): CodeBlockMeta<'dom'> => {
     fence.codeBlockWrapper = select(fence.codeBlockWrapper)
-      .update('.code-block', 'Problems updating the code-block wrapper for the file!')(
-        flow(
-          addClass(`language-${fence.lang}`),
-          setAttribute('data-lang')(fence.requestedLang),
-          setAttribute('data-modifiers')(fence.modifiers?.join(',') || ''),
-          o.lineNumbers || fence.modifiers.includes(Modifier['#'])
-            ? addClass('line-numbers-mode')
-            : identity,
-          fence.externalFile
-            ? addClass('external-ref')
-            : identity,
-          fence.aboveTheFoldCode
-            ? addClass('with-inline-content')
-            : identity,
-        ),
+      .update(
+        '.code-block',
+        'Problems updating the code-block wrapper for the file!',
+      )(flow(
+        addClass(`language-${fence.lang}`),
+        setAttribute('data-lang')(fence.requestedLang),
+        setAttribute('data-modifiers')(fence.modifiers?.join(',') || ''),
+        o.lineNumbers || fence.modifiers.includes(Modifier['#'])
+          ? addClass('line-numbers-mode')
+          : identity,
+        fence.externalFile
+          ? addClass('external-ref')
+          : identity,
+        fence.aboveTheFoldCode
+          ? addClass('with-inline-content')
+          : identity,
+      ),
       ).toContainer()
 
     return fence

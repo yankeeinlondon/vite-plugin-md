@@ -79,9 +79,14 @@ export interface Tree {
 }
 
 /**
- * A callback which receives a node type `C` and allows side-effects and/or mutation
+ * A callback which receives a node type `C` and allows side-effects and/or
+ * mutation. It expects the same container structure -- mutation or not -- to
+ * be passed back as a return value. The one exception is that if you pass back
+ * a `false` value then the element will be removed.
  */
-export type UpdateCallback<C extends Container> = (container: C, idx?: number, total?: number) => C | void
+export type UpdateCallback<C extends Container> = (container: C, idx?: number, total?: number) => C | false
+
+export type MapCallback<I, O> = (input: I) => O
 
 export interface NodeSolverDict<O> {
   html: (input: HTML) => O extends 'mirror' ? HTML : O
@@ -153,6 +158,19 @@ export interface NodeSelector<T extends Container | 'html'> {
    * children of the root node.
    */
   updateAll: <S extends string | undefined>(sel?: S) => (cb: UpdateCallback<IElement>) => NodeSelector<T>
+
+  /**
+   * Map over all selected items and transform them as needed; results are returned to
+   * caller (exiting the selection API) and operation does not mutate the parent
+   * selected DOM tree.
+   */
+  mapAll: <S extends string | undefined>(selection?: S) => <O, M extends MapCallback<IElement, O>>(mutate: M) => O[]
+
+  /**
+   * Filters out all nodes which match the DOM query selector and returns the
+   * selector API
+   */
+  filter: <S extends string>(selection: S) => NodeSelector<T>
 
   /**
    * Returns the root node with all mutations included

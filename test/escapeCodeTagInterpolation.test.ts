@@ -4,14 +4,18 @@ import { code } from '../src'
 import { composeFixture, importFixture } from './utils'
 
 describe('escapeCodeTagInterpolation()', () => {
-  it('default is to turn on tag interpolation', async () => {
+  it.only('default is to turn on tag interpolation', async () => {
     const sfc = await composeFixture('escape-on.md')
+
     const sel = select(sfc.html)
     const pre = sel.findAll('pre')
     const getVPre = getAttribute('v-pre')
 
     expect(sfc.html).toContain('language-vue')
-    expect(sfc.html, `\nthe "!" should not be part of the HTML:\n${sfc.html}\n`).not.toContain('language-!vue')
+    expect(
+      sfc.html,
+      `\nthe "!" should not be part of the HTML:\n${sfc.html}\n`,
+    ).not.toContain('language-!vue')
 
     expect(getVPre(pre[0])).toBeTruthy()
     expect(getVPre(pre[1])).toBeFalsy()

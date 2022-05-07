@@ -1,23 +1,24 @@
-import { toHtml } from 'happy-wrapper'
+import { extract, select, toHtml } from 'happy-wrapper'
+import type { IElement } from 'happy-dom'
+import type { HTML } from 'happy-wrapper'
+import { identity } from 'fp-ts/lib/function'
+import { isVue2, transformer, wrap } from '../utils'
 import type {
   ResolvedOptions,
 } from '../types'
-import { isVue2, transformer, wrap } from '../utils'
-
-const scriptSetupRE = /<\s*script[^>]*\bsetup\b[^>]*>([\s\S]*)<\/script>/mg
 
 /**
  * Finds any references to `<script>` blocks and extracts it
  * from the html portion.
  */
-function extractScriptBlocks(html: string) {
-  const scripts: string[] = []
-  html = html.replace(scriptSetupRE, (_, script) => {
-    scripts.push(script)
-    return ''
-  })
+function extractScriptBlocks(html: HTML) {
+  const scripts: IElement[] = []
+  const extractor = extract(scripts)
+  html = select(html)
+    .updateAll('script')(extractor)
+    .toContainer()
 
-  return { html, scripts }
+  return { html, scripts: scripts.map(el => toHtml(el)) }
 }
 
 /**
@@ -81,17 +82,49 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
       : '',
   }
 
+  const regularScriptBlocks = hoistScripts.scripts.map(
+    s => select(s).filter('script[setup]').toContainer(),
+  ).filter(i => i).join('\n')
+  /** all `<setup script>` blocks */
+  const scriptSetupBlocks = hoistScripts.scripts.map(
+    s => select(s)
+      // unwrap the <script>...</script> tag and return only interior content
+      .mapAll('script[setup]')(el => el.innerHTML),
+  ).join('\n')
+  /** userland `<setup script>` import directives */
+  const importDirectives: string[] = []
+
+  /** all userland non-import lines in `<setup script>` blocks */
+  const nonImportDirectives = scriptSetupBlocks.split('\n').map((line) => {
+    if (/^import/.test(line)) {
+      importDirectives.push(line)
+      return ''
+    }
+    else { return line }
+  }).filter(i => i).join('\n')
+
   const scriptBlock = isVue2(options)
-    ? wrap('script', [blocks.localVariables, blocks.frontmatter, blocks.vue2DataExport].join('\n'))
-    : `${wrap('script setup', [
-      blocks.useHead,
-      blocks.exposeFrontmatter,
-      blocks.localVariables,
-    ].filter(i => i).join('\n  '))}
-    ${wrap('script', [
-    blocks.frontmatter,
-  ].filter(i => i).join('\n  '))}
-    ${blocks.routeMeta}`
+    ? [
+        wrap('script', [
+          blocks.localVariables,
+          blocks.frontmatter,
+          blocks.vue2DataExport,
+        ].join('\n')),
+        hoistScripts.scripts.join('\n'),
+      ].filter(i => i).join('\n')
+    // Vue3
+    : [
+        wrap('script setup', [
+          importDirectives,
+          blocks.useHead,
+          blocks.exposeFrontmatter,
+          blocks.localVariables,
+          nonImportDirectives,
+        ].filter(i => i).join('\n  ')),
+        wrap('script', blocks.frontmatter),
+        regularScriptBlocks,
+        blocks.routeMeta,
+      ].filter(i => i).join('\n')
 
   return { ...payload, html, hoistedScripts, templateBlock, scriptBlock, customBlocks }
 })

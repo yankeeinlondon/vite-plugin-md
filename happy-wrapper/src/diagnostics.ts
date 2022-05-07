@@ -84,6 +84,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
          * a connected parent in a DOM tree.
          */
         hasNaturalParent: !!x.parentElement,
+        ...(x.parentElement ? { parent: describe(x.parentElement) } : {}),
         textContent: x.textContent,
         children: `${x.children.length} / ${x.childNodes.length}`,
         childContent: x.childNodes?.map(i => i.textContent),

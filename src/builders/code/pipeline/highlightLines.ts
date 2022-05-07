@@ -47,7 +47,11 @@ export const highlightLines = (_o: CodeOptions) => (fence: CodeBlockMeta<'dom'>)
     ...fence,
     trace: `Highlighted line(s) were: ${hl.join(', ')}`,
 
-    code: select(fence.code).updateAll('.code-line')(highlight).toContainer(),
-    lineNumbersWrapper: select(fence.lineNumbersWrapper).updateAll('.line-number')(highlight).toContainer(),
+    code: select(fence.code)
+      .updateAll('.code-line')((el, idx) => highlight(el, idx as number))
+      .toContainer(),
+    lineNumbersWrapper: select(fence.lineNumbersWrapper)
+      .updateAll('.line-number')((el, idx) => highlight(el, idx as number))
+      .toContainer(),
   }
 }

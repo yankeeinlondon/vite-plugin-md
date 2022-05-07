@@ -24,10 +24,7 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
       .update(
         '.code-block',
         `Couldn't find the ".code-block" in the file ${p.fileName}`,
-      )(el => into(el)([
-        fence.pre,
-        lineNumbersWrapper,
-      ]))
+      )(el => into(el)(fence.pre, lineNumbersWrapper))
       .update(
         '.code-wrapper',
         `Couldn't find the ".code-wrapper" in the file ${p.fileName}`,

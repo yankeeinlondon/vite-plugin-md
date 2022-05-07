@@ -38,11 +38,10 @@ exports[`link testing > component snapshot is consistent 1`] = `
  const title = \\"Links Testing\\"
  const excerpt = undefined
 </script>
-    
+
 <script>
   /** frontmatter meta-data for MD page **/
   export const frontmatter = {\\"title\\":\\"Links Testing\\"}
 </script>
-    
 "
 `;

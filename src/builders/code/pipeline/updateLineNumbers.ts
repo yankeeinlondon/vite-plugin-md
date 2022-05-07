@@ -5,7 +5,6 @@ import {
   createElementNode,
   removeClass,
   select,
-  toHtml,
   wrap,
 } from 'happy-wrapper'
 import type { CodeBlockMeta, CodeOptions } from '../types'
@@ -35,19 +34,13 @@ const applyLineClasses = (
     .updateAll(domSelector)(
       (el, idx) => pipe(
         el,
-        evenOdd(lineNumber(idx)),
-        firstLast(lineNumber(idx)),
+        evenOdd(lineNumber(idx as number)),
+        firstLast(lineNumber(idx as number)),
         removeClass('line'),
-        addClass(specificLine(idx)),
-        (e) => {
-          // console.log('element', toHtml(e))
-          // return e
-        },
+        addClass(specificLine(idx as number)),
       ),
     )
     .toContainer()
-
-  console.log('SECTION:\n', toHtml(s))
 
   return s
 }
@@ -87,7 +80,7 @@ export const updateLineNumbers = (o: CodeOptions) =>
     const aboveTheFoldCode = fence.aboveTheFoldCode
       ? select(fence.aboveTheFoldCode)
         .updateAll('.line-above')((el, idx, total) => {
-          linesAboveTheFold = total
+          linesAboveTheFold = total || 0
           return pipe(
             el,
             addClass(['line']),

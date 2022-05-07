@@ -1,4 +1,4 @@
-import { constVoid, flow, pipe } from 'fp-ts/lib/function'
+import { pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
 import {
   addClass,
@@ -21,7 +21,6 @@ import {
   safeString,
   select,
   setAttribute,
-  tab,
   toHtml,
   wrap,
 } from '../src'
@@ -149,22 +148,17 @@ describe('HappyDom\'s can be idempotent', () => {
     const html = '<div class="parent"><span class="foobar">hello world</span></div>'
     const onlySpan = html.replace(/div/g, 'span')
     const onlyDiv = html.replace(/span/g, 'div')
-    const outside = replaceElement(createElementNode(html))(createElementNode(onlySpan))
+    const outside = replaceElement(createElementNode(onlySpan))(createElementNode(html))
     // basic replacement where parent is not defined
     expect(toHtml(outside), onlySpan)
 
     const parent = createElementNode(html)
-    const staticReplacement = createElementNode('<div class="foobar">hello world</div>')
-    const toDiv = changeTagName('div')
-    const interior = select(clone(parent))
-      .updateAll('.foobar')(el => el.replaceWith(staticReplacement))
-      .toContainer()
-    expect(toHtml(interior)).toBe(onlyDiv)
 
-    const interior2 = select(clone(parent))
-      .updateAll('.foobar')(el => el.replaceWith(toDiv(el)))
+    const interior = select(clone(parent))
+      .updateAll('.foobar')(replaceElement('<div class="foobar">hello world</div>'))
       .toContainer()
-    expect(toHtml(interior2)).toBe(onlyDiv)
+
+    expect(toHtml(interior)).toBe(onlyDiv)
   })
 
   it('changeTag() can preserve parent node', () => {
@@ -212,25 +206,19 @@ describe('HappyDom\'s can be idempotent', () => {
       <span class="line line-3">3</span>
     </div>
     `
+
     const toDiv = changeTagName('div')
     const toTable = changeTagName('table')
     const toTR = changeTagName('tr')
-
     const selector = select(html)
 
-    const updatedViaReplacement = select(html)
+    const updated = selector
       .updateAll('.line')(toDiv)
       .toContainer()
 
-    expect(updatedViaReplacement).toBe(html.replace(/span/g, 'div'))
+    expect(updated).toBe(html.replace(/span/g, 'div'))
 
-    const updatedViaTree = selector
-      .updateAll('.line')(flow(toDiv, constVoid))
-      .toContainer()
-
-    expect(updatedViaTree).toBe(html.replace(/span/g, 'div'))
-
-    const table = select(html)
+    const table = selector
       .update('.wrapper')(toTable)
       .updateAll('.line')(toTR)
       .toContainer()

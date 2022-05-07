@@ -1,8 +1,8 @@
 import type { Document, DocumentFragment, IElement } from 'happy-dom'
 import { createFragment } from './create'
-import { inspect } from './diagnostics'
+import { describe, inspect } from './diagnostics'
 import { HappyMishap } from './errors'
-import type { Container, HTML, NodeSelector, UpdateCallback } from './happy-types'
+import type { HTML, MapCallback, NodeSelector, UpdateCallback } from './happy-types'
 import { getChildElements } from './nodes'
 import { isDocument, isElement, isFragment, isTextNode } from './type-guards'
 import { clone, getNodeType, toHtml } from './utils'
@@ -12,15 +12,15 @@ import { clone, getNodeType, toHtml } from './utils'
  * then wrapped and a helpful query and mutation API is provided
  * to work with this DOM element.
  */
-export const select = <D extends Container | HTML>(node: D) => {
+export const select = <D extends Document | DocumentFragment | IElement | HTML>(node: D) => {
   const originIsHtml = typeof node === 'string'
-  const rootNode: Document | DocumentFragment | IElement | null = originIsHtml
+  const rootNode: Document | DocumentFragment | IElement = originIsHtml
     ? createFragment(node)
     : isElement(node)
       ? node as IElement
       : isDocument(node) || isFragment(node)
         ? node
-        : null
+        : undefined as never
 
   if (!rootNode)
     throw new HappyMishap(`Attempt to select() an invalid node type: ${getNodeType(node)}`, { name: 'select(INode)', inspect: node })
@@ -33,20 +33,12 @@ export const select = <D extends Container | HTML>(node: D) => {
         : getNodeType(rootNode)
     },
 
-    /**
-     * query for _all_ nodes with given selector
-     */
     findAll: <S extends string | undefined>(sel: S) => {
       return sel
         ? rootNode.querySelectorAll(sel) as IElement[]
         : getChildElements(rootNode)
     },
-    /**
-     * query for the _first_ node with the given selector
-     *
-     * Note: by default, if nothing is found this will return `null` but
-     * if you want to state an error message you may.
-     */
+
     findFirst: <E extends string | undefined>(
       sel: string,
       errorMsg?: E): undefined extends E ? IElement | null : IElement => {
@@ -74,7 +66,7 @@ export const select = <D extends Container | HTML>(node: D) => {
       selection?: string,
       errorIfNotFound: boolean | string = false,
     ) => (mutate: UpdateCallback<IElement>) => {
-      const found = selection
+      const el = selection
         ? rootNode.querySelector(selection) as IElement | null
         : isDocument(rootNode) || isFragment(rootNode)
           ? rootNode.firstElementChild
@@ -82,15 +74,20 @@ export const select = <D extends Container | HTML>(node: D) => {
             ? rootNode
             : null
 
-      if (!selection && found === null)
+      if (!selection && el === null)
         throw new HappyMishap('Performing an update on a root selection which is a Text node is not allowed!', { name: 'update()' })
       if ((isDocument(rootNode) || isFragment(rootNode)) && (rootNode.firstElementChild !== rootNode.lastElementChild))
         throw new HappyMishap('Performing an update on a document or fragment which has more than a single element as a child is not expected! Try either updateAll() or use a DOM selection query!', { name: 'update()' })
 
-      if (found) {
-        const results = mutate(clone(found), 0, 1)
-        if (results)
-          found.replaceWith(results)
+      if (el) {
+        const results = mutate(clone(el), 0, 1)
+        if (isElement(results))
+          el.replaceWith(results)
+        else if (results === false)
+          el.remove()
+
+        else
+          throw new HappyMishap(`The return value for a call to select(${getNodeType(rootNode)}).update(${selection}) return an invalid value! Value return values are an IElement or false.`, { name: 'select.update', inspect: el })
       }
       else {
         if (errorIfNotFound) {
@@ -117,8 +114,8 @@ export const select = <D extends Container | HTML>(node: D) => {
      */
     updateAll: <S extends string | undefined>(selection?: S) => (mutate: UpdateCallback<IElement>) => {
       /**
-         * The array of DOM nodes which have been selected.
-         */
+        * The array of DOM nodes which have been selected.
+        */
       const elements: IElement[] = (
         selection
           ? rootNode.querySelectorAll(selection)
@@ -127,23 +124,62 @@ export const select = <D extends Container | HTML>(node: D) => {
 
       elements.forEach((el, idx) => {
         if (isElement(el) || isTextNode(el)) {
+          let elReplacement: IElement | false
           try {
-            const elReplacement = mutate(el, idx, elements.length)
-            // if explicit return from mutate then replace the element;
-            // in contrast a `void` return will _not_ replace the node but
-            // it any mutations to the element will be visible on the
-            // selected DOM tree.
-            if (elReplacement)
-              el.replaceWith(elReplacement)
+            const cloned = clone(el)
+            elReplacement = mutate(cloned, idx, elements.length)
           }
           catch (e) {
-            throw new Error(`updateAll(): problem updating an element with the passed in callback function:  \n\t${mutate.toString()}\n\n${e instanceof Error ? e.message : String(e)}.\n${JSON.stringify(inspect(el), null, 2)}\n\nThe callback function was:`)
+            throw new HappyMishap(`updateAll(): the passed in callback to select(container).updateAll('${selection}')():  \n\n\tmutate(${describe(el)}, ${idx} idx, ${elements.length} elements)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })
           }
+          // Expects an element to be returned
+          if (isElement(elReplacement))
+            el.replaceWith(elReplacement)
+
+          // an explicit `false` return indicates the intent to remove
+          else if (elReplacement === false)
+            el.remove()
+          else
+            throw new HappyMishap(`The return value from the "select(container).updateAll('${selection}')(${describe(el)}, ${idx} idx, ${elements.length} elements)" call was invalid! Valid return values are FALSE or an IElement but instead got: ${typeof elReplacement}.`, { name: 'select().updateAll -> invalid return value' })
         }
+
         else {
           throw new Error(`Ran into an unknown node type while running updateAll(): ${JSON.stringify(inspect(el), null, 2)}`)
         }
       })
+
+      return api
+    },
+
+    /**
+     * Maps over all IElement's which match the selection criteria (or all child
+     * elements if no selection provided) and provides a callback hook which allows
+     * a mutation to any data structure the caller wants.
+     *
+     * This method is non-destructive to the parent selection captured with the
+     * call to `select(dom)` and returns the map results to the caller instead of
+     * continuing the selection API surface.
+     */
+    mapAll: <S extends string | undefined>(selection?: S) =>
+      <M extends MapCallback<IElement, any>>(mutate: M) => {
+        const collection: ReturnType<M>[] = []
+        const elements: IElement[] = selection
+          ? rootNode.querySelectorAll(selection)
+          : getChildElements(rootNode)
+
+        elements.forEach(el =>
+          collection.push(mutate(clone(el))),
+        )
+
+        return collection
+      },
+
+    /**
+     * Filters out `IElement` nodes out of the selected DOM tree which match
+     * a particular DOM query
+     */
+    filter: <S extends string>(selection: S) => {
+      rootNode.querySelectorAll(selection).map(el => el.remove())
 
       return api
     },

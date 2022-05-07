@@ -55,11 +55,11 @@
     "fp-ts": "^2.12.1",
     "gray-matter": "^4.0.3",
     "happy-dom": "^3.1.0",
+    "happy-wrapper": "workspace:*",
     "markdown-it": "^13.0.1",
     "prismjs": "^1.28.0",
     "shiki": "^0.10.1",
-    "vue-router": "^4.0.15",
-    "happy-wrapper": "workspace:*"
+    "vue-router": "^4.0.15"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.22.0",

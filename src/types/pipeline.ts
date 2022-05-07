@@ -254,7 +254,7 @@ export type PipelinePayload<S extends IPipelineStage> = PipeTask<S> | PipeEither
 /**
  * A _synchronous_ transformer function which:
  *
- * - recieves a payload of `PipeEither<F>`, and
+ * - receives a payload of `PipeEither<F>`, and
  * - converts it to a type of `PipeEither<T>`
  */
 export type SyncPipelineTransformer<
@@ -265,7 +265,7 @@ export type SyncPipelineTransformer<
 /**
 * An _asynchronous_ transformer function which:
 *
-* - recieves a payload of `PipeTask<F>` (async) or `PipeEither<F>` (sync)
+* - receives a payload of `PipeTask<F>` (async) or `PipeEither<F>` (sync)
 * - converts it to a type of `PipeTask<T>`
 */
 export type AsyncPipelineTransformer<

@@ -12,6 +12,7 @@
     "klass",
     "prefetch",
     "Shiki",
+    "userland",
     "Vite",
     "vitepress",
     "vitest",

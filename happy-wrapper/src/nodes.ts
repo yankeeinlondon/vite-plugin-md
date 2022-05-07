@@ -31,10 +31,29 @@ export const getChildElements = (el: Container): IElement[] => {
 }
 
 /**
+ * Extracts a node from a DOM tree; is designed to be used with `update/updateAll()`
+ * and the `updateChildren()` utilities. It can remove a set of elements as well as retain the extracted elements in
+ * an array of nodes.
+ * ```
+ * const memory = []
+ * domTree = select(domTree)
+ *  .updateAll('.bad-juju')(extract(memory))
+ *  .toContainer()
+ * ```
+ */
+export const extract = <M extends (IElement | IText) | IElement | undefined>(memory?: M[]) => <T extends IElement extends M
+  ? IElement
+  : IElement | IText>(node: T): false => {
+  if (memory)
+    memory.push(clone(node) as T & M)
+  return false // indicates that node passed in should be removed
+}
+
+/**
  * Replaces an existing element with a brand new one while preserving the element's
  * relationship to the parent node (if available).
  */
-export const replaceElement = (oldElement: IElement) => (newElement: IElement | HTML): IElement => {
+export const replaceElement = (newElement: IElement | HTML) => (oldElement: IElement): IElement => {
   const parent = oldElement.parentElement
   const newEl = typeof newElement === 'string' ? createElementNode(newElement) : newElement
 
@@ -49,9 +68,7 @@ export const replaceElement = (oldElement: IElement) => (newElement: IElement | 
     parent.replaceChildren(...updated)
   }
   return newEl
-}
-
-/**
+}/**
  * A higher order function which starts by receiving a _wrapper_ component
  * and then is fully applied when the child nodes are passed in.
  *
@@ -154,7 +171,7 @@ export const changeTagName = <T extends string>(
       },
       element: el => areTheSame(el.tagName, tagName)
         ? el
-        : replaceElement(el)(replacer(el, tagName)),
+        : replaceElement(replacer(el, tagName))(el),
 
       fragment: (f) => {
         if (f.firstElementChild)

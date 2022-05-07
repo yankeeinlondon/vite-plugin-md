@@ -28,10 +28,9 @@ exports[`excerpt snapshots > script blocks are consistent 1`] = `
  const title = \\"Excerpt with default separator\\"
  const excerpt = undefined
 </script>
-    
+
 <script>
   /** frontmatter meta-data for MD page **/
   export const frontmatter = {\\"title\\":\\"Excerpt with default separator\\"}
-</script>
-    "
+</script>"
 `;

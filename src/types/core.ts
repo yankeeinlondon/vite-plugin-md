@@ -81,6 +81,8 @@ export interface Frontmatter {
   name?: string
   excerpt?: string
   image?: string
+  layout?: string
+  requiresAuth?: boolean
   meta?: MetaProperty[]
   [key: string]: unknown
 }

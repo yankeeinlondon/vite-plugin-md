@@ -31,6 +31,16 @@ export function createFragment<C extends Container | HTML>(content?: C): Fragmen
   return fragment as FragmentFrom<C extends string ? 'html' : DocumentFragment>
 }
 
+export const createNode = (node: Container | string): IElement | IText => {
+  const frag = createFragment(node)
+  if (isElementLike(frag))
+    return frag.firstElementChild as IElement
+  else if (isTextNodeLike(frag))
+    return frag.firstChild as IText
+  else
+    throw new HappyMishap('call to createNode() couldn\'t be converted to IElement or IText node', { name: 'createNode()', inspect: node })
+}
+
 export function createTextNode(text?: string): IText {
   if (!text) {
     console.warn('An empty string was passed into createTextNode(); will be ignored but probably a mistake')

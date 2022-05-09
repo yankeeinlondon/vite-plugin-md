@@ -4,6 +4,12 @@ import callsites from 'callsites'
 import { inspect } from './diagnostics'
 import { isHappyWrapperError, isInspectionTuple } from './type-guards'
 
+export interface StackLine {
+  fn: string | undefined
+  line: number | undefined
+  file: string | undefined
+}
+
 const showCallsite = (cs: CallSite | undefined) => cs
   ? `\n  - ${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() || ''}${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() ? '(), ' : ''}${relative(process.cwd(), cs.getFileName() || '')}:${cs.getLineNumber() || ''}`
   : ''
@@ -15,7 +21,21 @@ export class HappyMishap extends Error {
   public readonly line: number | null
   public readonly fn: string
   public readonly file: string
-  public readonly structuredStack: CallSite[]
+  public readonly structuredStack: StackLine[]
+  public toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+    }
+  }
+
+  public toString() {
+    return {
+      name: this.name,
+      message: this.message,
+    }
+  }
+
   constructor(
     message: string,
     options: {
@@ -26,16 +46,29 @@ export class HappyMishap extends Error {
     super()
     this.message = `\n${message}`
     if (options.name)
-      this.name = `HappyWrapper::${options.name}`
+      this.name = `HappyWrapper::${options.name || 'unknown'}`
 
-    this.structuredStack = this.structuredStack = callsites().slice(1) || []
-    this.fn = this.structuredStack[0].getFunctionName() || this.structuredStack[0].getMethodName() || 'unknown'
-    this.file = this.structuredStack[0].getFileName() || 'unknown'
-    this.line = this.structuredStack[0].getLineNumber()
+    try {
+      this.structuredStack = this.structuredStack = callsites().slice(1).map((i) => {
+        return {
+          fn: i.getFunctionName() || i.getMethodName() || i.getFunction()?.name || '',
+          line: i.getLineNumber() || undefined,
+          file: i.getFileName() ? relative(process.cwd(), i.getFileName() as string) : '',
+        }
+      })
+      || []
+    }
+    catch {
+      this.structuredStack = []
+    }
+
+    this.fn = this.structuredStack[0].fn || ''
+    this.file = this.structuredStack[0].file || ''
+    this.line = this.structuredStack[0].line || null
 
     // proxy if already a HappyWrapper
     if (isHappyWrapperError(options.error))
-      this.name = `HappyWrapper::${options.name || options.error.name}`
+      this.name = `[file: ${this.file}, line: ${this.line}] HappyWrapper::${options.name || options.error.name}`
 
     if (options.error) {
       const name = options.error instanceof Error
@@ -64,11 +97,12 @@ export class HappyMishap extends Error {
         this.message = `${this.message}\n\nTrace:${this.trace.map((i, idx) => `${idx}. ${i}`)}`
     }
 
+    this.message = `${this.message}\n`
     this.structuredStack.forEach(
       (l) => {
-        this.message = l.getFileName()?.includes('.pnpm')
+        this.message = l.file?.includes('.pnpm')
           ? this.message
-          : `${this.message}${showCallsite(l)}`
+          : `${this.message}\n  - ${l.fn ? `${l.fn}() ` : ''}${l.file}:${l.line}`
       },
     )
   }

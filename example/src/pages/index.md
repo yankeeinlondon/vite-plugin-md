@@ -6,7 +6,10 @@ meta:
 test: test
 ---
 
-
+<route lang="yaml">
+meta:
+  foo: "bar"
+</route>
 
 ## Installation
 
@@ -21,9 +24,11 @@ fill in
 You can add in meta-data to the top of your markdown using the standard convention of Frontmatter which demarcates the beginning/end of the meta data with `---` markers.
 
 The frontmatter for this page is:
+
 ```!#json heading="frontmatter"
 {{ frontmatter }}
 ```
+
 > Note: while it is represented here as a JSON structure, in the markdown you would add in YAML syntax.
 
 ## VueJS Components

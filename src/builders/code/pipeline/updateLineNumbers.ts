@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/lib/function'
 import type { DocumentFragment, IElement } from 'happy-dom'
 import {
   addClass,
+  before,
   createElementNode,
   removeClass,
   select,
@@ -91,7 +92,7 @@ export const updateLineNumbers = (o: CodeOptions) =>
     /** the code with meta-classes added and including the "aboveTheFold" code */
     const code: DocumentFragment = pipe(
       aboveTheFoldCode
-        ? wrap(fence.code)(fence.aboveTheFoldCode)
+        ? before(fence.aboveTheFoldCode?.firstElementChild)(fence.code)
         : fence.code,
       applyLineClasses(fence, 'code-line', linesAboveTheFold),
     )

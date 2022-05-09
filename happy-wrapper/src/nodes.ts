@@ -2,8 +2,8 @@ import type { Document, DocumentFragment, IElement, IText } from 'happy-dom'
 import { HappyMishap } from './errors'
 import { createDocument, createElementNode, createFragment } from './create'
 import type { Container, ContainerOrHtml, DocRoot, HTML } from './happy-types'
-import { isElement, isFragment, isTextNode, isTextNodeLike } from './type-guards'
-import { clone, solveForNodeType, toHtml } from './utils'
+import { isDocument, isElement, isFragment, isTextNode, isTextNodeLike } from './type-guards'
+import { clone, getNodeType, solveForNodeType, toHtml } from './utils'
 
 /**
  * converts a IHTMLCollection or a INodeList to an array
@@ -14,11 +14,15 @@ export const getChildren = (el: Container): (IElement | IText)[] => {
 
   const output: (IElement | IText)[] = []
   let child = el.firstChild as IElement | IText
+
   for (let idx = 0; idx < el.childNodes.length; idx++) {
     if (isElement(child) || isTextNode(child))
       output.push(child)
+    else if (isFragment(child) || isDocument(child))
+      getChildren(child).forEach(fragChild => output.push(fragChild))
+
     else
-      throw new HappyMishap('Unknown node type found while trying to convert children to an Array', { name: 'getChildrenAsArray', inspect: child })
+      throw new HappyMishap(`unknown node type [${getNodeType(child)}] found while trying to convert children to an array`, { name: 'getChildrenAsArray', inspect: child })
 
     child = child.nextSibling as IElement | IText
   }
@@ -51,10 +55,13 @@ export const extract = <M extends (IElement | IText) | IElement | undefined>(mem
 
 /**
  * Replaces an existing element with a brand new one while preserving the element's
- * relationship to the parent node (if available).
+ * relationship to the parent node.
  */
 export const replaceElement = (newElement: IElement | HTML) => (oldElement: IElement): IElement => {
   const parent = oldElement.parentElement
+  if (isElement(parent) || isTextNode(parent))
+    parent.replaceChild(createElementNode(newElement), oldElement)
+
   const newEl = typeof newElement === 'string' ? createElementNode(newElement) : newElement
 
   if (parent) {
@@ -124,7 +131,7 @@ export const into = <P extends DocRoot | IElement | HTML | undefined>(
 
   return wrapped
     ? toHtml(p) as undefined extends P ? DocumentFragment : P
-    : p as undefined extends P? DocumentFragment : P
+    : p as undefined extends P ? DocumentFragment : P
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -213,27 +220,72 @@ export const prepend = (prepend: IElement | IText | HTML) => (el: IElement): IEl
 }
 
 /**
- * Prepends an `IElement` as the first child element of a host element.
+ * used to replace a tree of nodes when a child node impacts an update on it's parent
+ */
+const replaceUpward = <N extends IElement | IText>(node: N): N => {
+  // console.log('upward', inspect(node))
+
+  const hasParentNode = isElement(node?.parentNode) || isTextNode(node?.parentNode)
+  if (hasParentNode) {
+    node.parentNode.replaceChild(node, node)
+    replaceUpward(node.parentNode)
+  }
+  return node
+}
+
+/**
+ * Inserts a set of Node or string objects in the children list of this Element's
+ * parent, just before this Element. String objects are inserted as equivalent Text nodes.
  *
  * Note: you can use a string representation of an element
  * ```ts
- * const startWith = prepend('<h1>just do it</h1>')
+ * const startWith = before('<h1>just do it</h1>')
  * const message: IElement = startWith(body)
  * ```
  */
-export const before = (before: IElement | IText | HTML) => <E extends IElement | DocumentFragment>(el: E): E => {
+export const before = (
+  before: IElement | IText | HTML,
+) => <E extends IElement | DocumentFragment>(
+  container: E,
+): E => {
   const toInject = typeof before === 'string'
     ? createFragment(before).firstElementChild
     : before
 
-  if (isElement(el) && el.parentElement)
-    el.parentElement.prepend(toInject, el)
-  if (isFragment(el))
-    el.prepend(el)
-  else
-    throw new HappyMishap('No parent element found on the element passed into before() method!', { name: 'before()', inspect: el })
+  const invalidType = (n: string | Container) => {
+    throw new HappyMishap(
+    `The before function was passed an invalid container type: ${getNodeType(n)}`,
+    { name: `before(${getNodeType(before)})(invalid)` },
+    )
+  }
 
-  return el as E
+  return solveForNodeType('html')
+    .mirror()
+    .solver({
+      text: t => invalidType(t),
+      node: n => invalidType(n),
+      document: d => invalidType(d),
+      fragment: (f) => {
+        f.prepend(toInject)
+        return f
+      },
+      element: (el) => {
+        if (el.parentElement || el.parentNode) {
+          // inject the node before this one (on parent)
+          el.before(toInject)
+
+          return el
+        }
+        // if (el.parentElement) { el.parentElement.prepend(toInject, el) }
+        // else if (el.parentNode) { el.parentNode.appendChild(toInject) }
+        else {
+          throw new HappyMishap(
+            'the before() mutations depends on access to a parent node and neither parentElement nor parentNode properties were available on the passed on container.',
+            { name: `before(${getNodeType(before)})(IElement)` },
+          )
+        }
+      },
+    })(container)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

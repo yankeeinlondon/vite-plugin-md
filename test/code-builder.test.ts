@@ -45,7 +45,7 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     const langLine = templateBlock?.split('\n').find(i => i.includes('language-markdown'))
     expect(templateBlock.includes('language-bash'), `when no language is stated we configured to have it converted to 'md' but we got:\n${langLine}`).toBeTruthy()
   })
-  it.only('line numbers are displayed when set', async () => {
+  it('line numbers are displayed when set', async () => {
     const { templateBlock, html } = await composeSfcBlocks(
       'test/fixtures/ts-code-block.md',
       await getFixture('ts-code-block.md'),
@@ -249,14 +249,16 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     expect(sel.findFirst('.comment')?.textContent).toContain('this is one impressive function')
   })
 
-  it('highlighting imported code, while also using inline code', async () => {
+  it.only('highlighting imported code, while also using inline code', async () => {
     const { html } = await composeFixture('external-reference-inline', { builders: [code()] })
 
     const sel = select(html)
-    const codeBlock = sel.findFirst('.code-block')
+    const codeBlock = sel.findFirst('.code-block', 'no code block found!')
 
     expect(getClassList(codeBlock)).toContain('external-ref')
     expect(getClassList(codeBlock)).toContain('with-inline-content')
+
+    console.log(toHtml(sel.findAll('.comment')))
 
     // the first comment should now come from the inline comment
     expect(sel.findFirst('.comment')?.textContent).not.toContain('this is one impressive function')

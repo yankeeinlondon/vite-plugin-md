@@ -9,7 +9,7 @@ const href = getAttribute('href')
 describe('loading images and links from frontmatter props', () => {
   it('locally referenced image', async () => {
     const { html } = await composeFixture('get-the-picture')
-    const sel = select(html).findFirst('img')
+    const sel = select(html).findFirst('img', 'did not find any images!')
     expect(alt(sel)).toBe('local cat')
     expect(src(sel)).toBe('{{localCat}}')
   })
@@ -23,7 +23,7 @@ describe('loading images and links from frontmatter props', () => {
 
   it('frontmatter based link has retains curly brackets', async () => {
     const { html } = await composeFixture('get-the-picture')
-    const sel = select(html).findFirst('a')
+    const sel = select(html).findFirst('a', 'found no links!')
     expect(href(sel)).toBe('{{catLink}}')
   })
 

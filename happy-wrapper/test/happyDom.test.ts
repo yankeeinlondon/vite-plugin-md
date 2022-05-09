@@ -2,6 +2,7 @@ import { pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
 import {
   addClass,
+  before,
   changeTagName,
   clone,
   createDocument,
@@ -16,12 +17,14 @@ import {
   isElementLike,
   nodeBoundedByElements,
   nodeChildrenAllElements,
+  prepend,
   removeClass,
   replaceElement,
   safeString,
   select,
   setAttribute,
   toHtml,
+  tree,
   wrap,
 } from '../src'
 
@@ -253,6 +256,34 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(toHtml(createFragment(createTextNode(text))), 'text as text node').toBe(text)
   })
 
+  it('before() allows a container to be injected before another container', async () => {
+    const wrap = createElementNode('<div class="wrapper"></div>')
+    const one = '<span class="item one">one</span>'
+    const two = '<span class="item two">two</span>'
+    const three = '<span class="item three">three</span>'
+    const wrappedOneTwo = into(wrap)(one, two)
+
+    const placed = select(wrappedOneTwo)
+      .update('.two', 'did not find "two" class!')((el) => {
+        expect(getClassList(el)).toContain('two')
+        // the element must have a parent to be able to run before()
+        expect(el.parentNode).toBeTruthy()
+
+        // put three _before_ two
+        before(three)(el)
+        // parent should now have three children total
+        expect(el?.parentNode?.childNodes.length, `parent node was: ${inspect(el.parentNode, true)}`).toBe(3)
+        return el
+      })
+      .toContainer()
+
+    const items = select(placed).findAll('.item')
+    expect(items).toHaveLength(3)
+    expect(items[0].textContent).toContain('one')
+    expect(items[1].textContent).toContain('three')
+    expect(items[2].textContent).toContain('two')
+  })
+
   it('into() with multiple nodes injected', () => {
     const wrapper = '<div class="my-wrapper"></div>'
     const indent = '\n\t'
@@ -265,6 +296,7 @@ describe('HappyDom\'s can be idempotent', () => {
       into(wrapper)(indent, text, element, closeout),
       'HTML wrapper passed in returns HTML with children inside',
     ).toBe(`<div class="my-wrapper">${html}</div>`)
+
     expect(
       into(wrapper)([indent, text, element, closeout]),
       'Children can be passed as an array too with no change in behavior',

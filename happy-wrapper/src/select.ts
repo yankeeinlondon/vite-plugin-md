@@ -44,7 +44,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
       errorMsg?: E): undefined extends E ? IElement | null : IElement => {
       const result = rootNode.querySelector(sel) as IElement | null
       if (!result && errorMsg)
-        throw new HappyMishap(`${errorMsg}`, { name: 'select.findFirst()' })
+        throw new HappyMishap(`${errorMsg}.\n\nThe HTML from the selected DOM node is:\n${toHtml(rootNode)}`, { name: 'select.findFirst()', inspect: rootNode })
 
       return result as undefined extends E ? IElement | null : IElement
     },
@@ -80,13 +80,11 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
         throw new HappyMishap('Performing an update on a document or fragment which has more than a single element as a child is not expected! Try either updateAll() or use a DOM selection query!', { name: 'update()' })
 
       if (el) {
-        const results = mutate(clone(el), 0, 1)
-        if (isElement(results))
-          el.replaceWith(results)
-        else if (results === false)
-          el.remove()
+        const results = mutate(el, 0, 1)
 
-        else
+        if (results === false)
+          el.remove()
+        else if (!isElement(results))
           throw new HappyMishap(`The return value for a call to select(${getNodeType(rootNode)}).update(${selection}) return an invalid value! Value return values are an IElement or false.`, { name: 'select.update', inspect: el })
       }
       else {
@@ -126,8 +124,8 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
         if (isElement(el) || isTextNode(el)) {
           let elReplacement: IElement | false
           try {
-            const cloned = clone(el)
-            elReplacement = mutate(cloned, idx, elements.length)
+            // const cloned = clone(el)
+            elReplacement = mutate(el, idx, elements.length)
           }
           catch (e) {
             throw new HappyMishap(`updateAll(): the passed in callback to select(container).updateAll('${selection}')():  \n\n\tmutate(${describe(el)}, ${idx} idx, ${elements.length} elements)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })

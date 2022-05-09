@@ -93,8 +93,8 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
     metaExtracted,
     parser,
     parsed,
-    dom,
 
+    dom,
     extractBlocks,
     handlers(PipelineStage.sfcBlocksExtracted),
 

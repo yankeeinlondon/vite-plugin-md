@@ -2,6 +2,11 @@ import type { Pipeline, PipelineStage } from '../../../types'
 import type { CodeBlockMeta } from '../types'
 import { Modifier } from '../types'
 
+/**
+ * In cases where escapeCodeTagInterpolation is `false` or the code block
+ * has used the negation modifier, we need to expand the variable to it's value
+ * prior to the code highlighter being introduced.
+ */
 export const expandCodeBlockVariables = (
   p: Pipeline<PipelineStage.parser>,
 ) => (fence: CodeBlockMeta<'code'>): CodeBlockMeta<'code'> => {

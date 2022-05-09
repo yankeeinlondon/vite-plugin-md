@@ -5,7 +5,7 @@ import { createFragment } from './create'
 import type { Container, HTML, NodeSolverReady, Tree, TreeSummary } from './happy-types'
 import { getChildren, into } from './nodes'
 import { isContainer, isElement, isElementLike, isTextNode, isTextNodeLike } from './type-guards'
-import { solveForNodeType, toHtml } from './utils'
+import { getNodeType, solveForNodeType, toHtml } from './utils'
 
 export const describe = solveForNodeType()
   .outputType<string>()
@@ -42,9 +42,15 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
               childNode: inspect(x.firstChild),
             }),
         content: x.textContent,
-        childHtml: x.childNodes.map((i) => {
+        childDetails: x.childNodes.map((i) => {
           try {
-            return toHtml(i)
+            return {
+              html: toHtml(i),
+              nodeType: getNodeType(i),
+              hasParentElement: !!i.parentElement,
+              hasParentNode: !!i.parentNode,
+              childNodes: i.childNodes.length,
+            }
           }
           catch {
             return 'N/A'
@@ -58,10 +64,16 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
         bodyChildren: x.body.childNodes?.length,
         body: toHtml(x.body),
         children: `${x.body.children?.length} / ${x.body.childNodes?.length}`,
-        childContent: x.body.childNodes.map(i => i.textContent),
-        childHtml: x.childNodes.map((i) => {
+        childTextContent: x.body.childNodes.map(i => i.textContent),
+        childDetails: x.childNodes.map((i) => {
           try {
-            return toHtml(i)
+            return {
+              html: toHtml(i),
+              nodeType: getNodeType(i),
+              hasParentElement: !!i.parentElement,
+              hasParentNode: !!i.parentNode,
+              childNodes: i.childNodes.length,
+            }
           }
           catch {
             return 'N/A'
@@ -88,9 +100,15 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
         textContent: x.textContent,
         children: `${x.children.length} / ${x.childNodes.length}`,
         childContent: x.childNodes?.map(i => i.textContent),
-        childHtml: x.childNodes?.map((i) => {
+        childDetails: x.childNodes.map((i) => {
           try {
-            return toHtml(i)
+            return {
+              html: toHtml(i),
+              nodeType: getNodeType(i),
+              hasParentElement: !!i.parentElement,
+              hasParentNode: !!i.parentNode,
+              childNodes: i.childNodes.length,
+            }
           }
           catch {
             return 'N/A'
@@ -111,7 +129,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
     : {
         result: 'not found',
         type: typeof item,
-        ...(typeof item === 'object' ? { keys: Object.keys(item as Object) } : { value: JSON.stringify(item) }),
+        ...(typeof item === 'object' && item !== null ? { keys: Object.keys(item as Object) } : { value: JSON.stringify(item) }),
       }
   return (toJSON ? JSON.stringify(result, null, 2) : result) as false extends T ? Record<string, any> : string
 }

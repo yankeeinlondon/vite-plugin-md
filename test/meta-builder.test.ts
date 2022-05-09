@@ -4,6 +4,7 @@ import { resolveOptions } from '../src/options'
 import { meta } from '../src/index'
 import type { Options } from '../src/types'
 import { composeSfcBlocks } from '../src/pipeline'
+import { composeFixture } from './utils'
 
 let md = ''
 
@@ -66,6 +67,72 @@ describe('use "meta" builder for frontmatterPreprocess', async () => {
     expect(output.includes('const frontmatter')).toBeTruthy()
     expect(output.includes('export const frontmatter')).toBeTruthy()
     expect(output.includes('defineExpose({ ')).toBeTruthy()
+  })
+
+  it('default route prop "layout" converted to route meta when present', async () => {
+    const sfc = await composeFixture('meta', {
+      builders: [meta()],
+    })
+
+    expect(sfc.customBlocks).toHaveLength(1)
+    expect(sfc.customBlocks[0]).toContain('layout')
+  })
+
+  it('configuring a property to be a route meta property results in a Route custom block being created for a given page', async () => {
+    const sfc = await composeFixture('route-meta-custom', {
+      builders: [meta({ routeProps: ['requiresAuth', 'layout'] })],
+    })
+
+    // multiple props are still just stored as one custom-block
+    expect(sfc.customBlocks).toHaveLength(1)
+    expect(sfc.customBlocks[0], `custom block was: ${sfc.customBlocks[0]}`).toContain('layout')
+    expect(sfc.customBlocks[0]).toContain('requiresAuth')
+  })
+
+  it('setting static and callback based default values works', async () => {
+    const sfc = await composeFixture('route-meta-custom', {
+      builders: [meta({
+        defaults: {
+          foo: 'bar',
+          title: 'default title',
+          requiresAuth: (_, file) => !!file.includes('secure'),
+        },
+      })],
+    })
+
+    expect(sfc.frontmatter.foo).toBe('bar') // no page value
+    expect(sfc.frontmatter.title).toBe('Metadata for your Route') // overridden
+    expect(sfc.frontmatter.requiresAuth).toBe(true) // overridden
+
+    const sfc2 = await composeFixture('meta', {
+      builders: [meta({
+        defaults: {
+          requiresAuth: (_, file) => !!file.includes('secure'),
+        },
+      })],
+    })
+    expect(sfc2.frontmatter.requiresAuth).toBe(false) // callback used
+
+    const sfc3 = await composeFixture('secure', {
+      builders: [meta({
+        defaults: {
+          requiresAuth: (_, file) => !!file.includes('secure'),
+        },
+      })],
+    })
+    expect(sfc3.frontmatter.requiresAuth).toBe(true) // callback used
+  })
+
+  it('override callback has ability to modify frontmatter to it\'s liking', async () => {
+    const sfc4 = await composeFixture('secure', {
+      builders: [meta({
+        defaults: {
+          requiresAuth: (_, file) => !!file.includes('secure'),
+        },
+        override: (fm, file) => ({ ...fm, category: file.includes('secure') ? 'top-secret' : 'pedestrian' }),
+      })],
+    })
+    expect(sfc4.frontmatter.category).toBe('top-secret')
   })
 })
 

@@ -118,8 +118,6 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     )
 
     const highlighted = select(html).findAll('.highlight')
-    highlighted.forEach(h => console.log(toHtml(h)),
-    )
 
     const line1 = select(html).findFirst('.line-1')
     const line2 = select(html).findFirst('.line-2')
@@ -222,8 +220,14 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     )
 
     const sel = select(html)
-    expect(getClassList(sel.findFirst('.code-block'))).toContain('external-ref')
-    expect(sel.findFirst('.comment')?.textContent).toContain('this is one impressive function')
+
+    expect(
+      getClassList(sel.findFirst('.code-block')),
+    ).toContain('external-ref')
+
+    const comments = sel.mapAll('.comment')(c => toHtml(c)).join('\n')
+    expect(comments).toContain('this is one impressive function')
+    expect(comments).toContain('do some amazing stuff')
   })
   it('code content loaded from file using object notation', async () => {
     const { html } = await composeSfcBlocks(
@@ -234,7 +238,9 @@ describe('code() builder using Prism (incl generalized tests)', () => {
 
     const sel = select(html)
     expect(getClassList(sel.findFirst('.code-block'))).toContain('external-ref')
-    expect(sel.findFirst('.comment')?.textContent).toContain('this is one impressive function')
+    const comments = sel.mapAll('.comment')(c => toHtml(c)).join('\n')
+    expect(comments).toContain('this is one impressive function')
+    expect(comments).toContain('do some amazing stuff')
   })
 
   it('code content loaded from file using CSV notation', async () => {
@@ -244,12 +250,12 @@ describe('code() builder using Prism (incl generalized tests)', () => {
       { builders: [code()] },
     )
 
-    const sel = select(html)
-    expect(getClassList(sel.findFirst('.code-block'))).toContain('external-ref')
-    expect(sel.findFirst('.comment')?.textContent).toContain('this is one impressive function')
+    const comments = select(html).mapAll('.comment')(c => toHtml(c)).join('\n')
+    expect(comments).toContain('this is one impressive function')
+    expect(comments).toContain('do some amazing stuff')
   })
 
-  it.only('highlighting imported code, while also using inline code', async () => {
+  it('highlighting imported code, while also using inline code', async () => {
     const { html } = await composeFixture('external-reference-inline', { builders: [code()] })
 
     const sel = select(html)
@@ -258,11 +264,11 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     expect(getClassList(codeBlock)).toContain('external-ref')
     expect(getClassList(codeBlock)).toContain('with-inline-content')
 
-    console.log(toHtml(sel.findAll('.comment')))
-
     // the first comment should now come from the inline comment
-    expect(sel.findFirst('.comment')?.textContent).not.toContain('this is one impressive function')
-    expect(sel.findFirst('.comment')?.textContent).toContain('the code below was brought in from an external file')
+    const comments = sel.mapAll('.comment')(c => toHtml(c)).join('\n')
+    expect(comments).toContain('this is one impressive function')
+    expect(comments).toContain('do some amazing stuff')
+    expect(comments).toContain('the code below was brought in from an external file')
   })
 
   // TODO: add this when symbol highlighting is ready

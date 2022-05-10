@@ -70,11 +70,12 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
     const table = select(fence.pre)
       .update()(toTable)
       .update()(
+        // if there's a "heading" then it will be the first row of the table
         fence.heading
           ? prepend(toTH(fence.heading.firstElementChild))
           : identity,
       )
-      .updateAll('.line')(
+      .updateAll('.code-line')(
         (el) => {
           const forParent: string[] = []
           return pipe(

@@ -4,8 +4,10 @@ import {
   addClass,
   before,
   createElementNode,
+  inspect,
   removeClass,
   select,
+  toHtml,
   wrap,
 } from 'happy-wrapper'
 import type { CodeBlockMeta, CodeOptions } from '../types'
@@ -78,21 +80,29 @@ const addLinesToContainer = (fence: CodeBlockMeta<'dom'>, o: CodeOptions, aboveT
 export const updateLineNumbers = (o: CodeOptions) =>
   (fence: CodeBlockMeta<'dom'>): CodeBlockMeta<'dom'> => {
     let linesAboveTheFold = 0
+    let emptyLines = 0
     const aboveTheFoldCode = fence.aboveTheFoldCode
       ? select(fence.aboveTheFoldCode)
         .updateAll('.line-above')((el, idx, total) => {
-          linesAboveTheFold = total || 0
-          return pipe(
-            el,
-            addClass(['line']),
-          )
+          if (el.textContent.length === 0 || (idx === 1 && el.textContent.trim() === '//')) {
+            emptyLines++
+            linesAboveTheFold = (total || 0) - emptyLines
+            return false
+          }
+          else {
+            linesAboveTheFold = (total || 0) - emptyLines
+            return pipe(
+              el,
+              addClass(['code-line']),
+            )
+          }
         }).toContainer()
       : undefined
 
     /** the code with meta-classes added and including the "aboveTheFold" code */
     const code: DocumentFragment = pipe(
       aboveTheFoldCode
-        ? before(fence.aboveTheFoldCode?.firstElementChild)(fence.code)
+        ? before(aboveTheFoldCode.firstElementChild)(fence.code)
         : fence.code,
       applyLineClasses(fence, 'code-line', linesAboveTheFold),
     )

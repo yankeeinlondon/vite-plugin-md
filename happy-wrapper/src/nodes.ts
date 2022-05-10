@@ -1,6 +1,6 @@
 import type { Document, DocumentFragment, IElement, IText } from 'happy-dom'
 import { HappyMishap } from './errors'
-import { createDocument, createElementNode, createFragment } from './create'
+import { createDocument, createElementNode, createFragment, createNode } from './create'
 import type { Container, ContainerOrHtml, DocRoot, HTML } from './happy-types'
 import { isDocument, isElement, isFragment, isTextNode, isTextNodeLike } from './type-guards'
 import { clone, getNodeType, solveForNodeType, toHtml } from './utils'
@@ -153,9 +153,13 @@ export const changeTagName = <T extends string>(
     const open = new RegExp(`^<${el.tagName.toLowerCase()}`)
     const close = new RegExp(`<\/${el.tagName.toLowerCase()}>$`)
 
-    return toHtml(el)
+    const newTag = toHtml(el)
       .replace(open, `<${tagName}`)
       .replace(close, `</${tagName}>`)
+    if (el.parentNode && el.parentNode !== null)
+      el.parentNode.replaceChild(createNode(newTag), el)
+
+    return newTag
   }
 
   const areTheSame = (before: string, after: string) =>
@@ -217,20 +221,6 @@ export const prepend = (prepend: IElement | IText | HTML) => (el: IElement): IEl
 
   el.prepend(p)
   return el
-}
-
-/**
- * used to replace a tree of nodes when a child node impacts an update on it's parent
- */
-const replaceUpward = <N extends IElement | IText>(node: N): N => {
-  // console.log('upward', inspect(node))
-
-  const hasParentNode = isElement(node?.parentNode) || isTextNode(node?.parentNode)
-  if (hasParentNode) {
-    node.parentNode.replaceChild(node, node)
-    replaceUpward(node.parentNode)
-  }
-  return node
 }
 
 /**

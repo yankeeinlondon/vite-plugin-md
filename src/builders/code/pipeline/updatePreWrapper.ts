@@ -5,10 +5,15 @@ import type { CodeBlockMeta } from '../types'
 import { Modifier } from '../types'
 
 /**
- * updates the `pre` block with classes, style, and adds the code block in as
+ * Updates the `pre` block with classes, style, and adds the code block in as
  * a child element.
+ *
+ * If there is any "above the fold" code then this is merged into the code
+ * block here.
  */
 export const updatePreWrapper = (p: Pipeline<PipelineStage.parser>) => (fence: CodeBlockMeta<'dom'>): CodeBlockMeta<'dom'> => {
+  const code = fence.aboveTheFoldCode ? [fence.code, fence.aboveTheFoldCode] : [fence.code]
+
   const pre = pipe(
     into(
       pipe(
@@ -24,7 +29,7 @@ export const updatePreWrapper = (p: Pipeline<PipelineStage.parser>) => (fence: C
           ? setAttribute('v-pre')('true')
           : identity,
       ),
-    )(fence.code),
+    )(...code),
   )
 
   return {

@@ -37,29 +37,15 @@ export type DomNode = IElement | IText | INode
 export type Container = DocRoot | DomNode
 export type ContainerOrHtml = Container | HTML
 
+/**
+ * The select.update/updateAll methods not only receive the _element_
+ * which is being mutated but also the _index_ and _total count_ of selection
+ * results.
+ */
+export type UpdateSignature = [ContainerOrHtml, number, number]
+
 export interface ToHtmlOptions {
   pretty?: boolean
-  indent?: number
-}
-
-export type FragWrapper = DocumentFragment | HTML
-export interface BeforeAfterWrapper {
-  /** put on the immediate interior of a tag */
-  open?: string
-  /**
-   * a text node _prepended_ before the element
-   */
-  before?: string
-  /** put before the closing tag */
-  close?: string
-  /**
-   * A text node _appended_ after the closing tag
-   */
-  after?: string
-  /**
-   * Provides tab/space indentation based on the nesting level
-   * of the element
-   */
   indent?: number
 }
 
@@ -79,12 +65,68 @@ export interface Tree {
 }
 
 /**
+ * Type utility which receives wide variety of signature types
+ * and reduces it down to a singular and proper DOM container type.
+ *
+ * In the case of a HTML input, the conversion is to a `DocumentFragment` which
+ * is safe but if you prefer this to be an `IElement` then use the **ToElement**
+ * utility instead.
+ */
+export type ToContainer<T extends Container | HTML | UpdateSignature | ContainerOrHtml[]> =
+  T extends string
+    ? DocumentFragment
+    : T extends UpdateSignature
+      ? T[0] extends Container
+        ? T[0]
+        : DocumentFragment
+      : T extends Container
+        ? T
+        : T extends any[]
+          ? T[0] extends string
+            ? DocumentFragment
+            : T[0]
+          : never
+
+/**
+ * Type utility which receives wide variety of signature types
+ * and reduces it down to a singular and proper DOM container type.
+ *
+ * In the case of a HTML input, the conversion is to a `IElement` which
+ * is often desirable but less "safe" than converting to a `DocumentFragment`;
+ * if you want that use the **ToContainer** utility instead.
+ */
+export type ToElement<T extends Container | HTML | UpdateSignature | ContainerOrHtml[]> =
+  T extends string
+    ? IElement
+    : T extends UpdateSignature
+      ? T[0] extends Container
+        ? T[0]
+        : IElement
+      : T extends Container
+        ? T
+        : T extends any[]
+          ? T[0] extends string
+            ? IElement
+            : T[0]
+          : never
+
+/**
  * A callback which receives a node type `C` and allows side-effects and/or
  * mutation. It expects the same container structure -- mutation or not -- to
  * be passed back as a return value. The one exception is that if you pass back
  * a `false` value then the element will be removed.
  */
-export type UpdateCallback<C extends Container> = (container: C, idx?: number, total?: number) => C | false
+export type UpdateCallback_Native = (el: IElement, idx: number, total: number) => IElement | false
+
+/**
+ * A callback function which will be called using the `UpdateCallback_Native` signature
+ * but can receive a wider variety of function signatures that are useful for scenarios
+ * where a utility function is used independently of the update and updateAll methods.
+ *
+ * In all cases, the function _must_ return either an `IElement` node _or_ a `false` value
+ * where _false_ indicates that the given node should be removed.
+ */
+export type UpdateCallback<C extends Container | HTML | UpdateSignature | ContainerOrHtml[]> = (args: C) => ToElement<C> | false
 
 export type MapCallback<I, O> = (input: I) => O
 
@@ -151,13 +193,13 @@ export interface NodeSelector<T extends Container | 'html'> {
    * Allows the injection of a callback which will be used to mutate on the first `IElement` node
    * which matches the first
    */
-  update: <E extends string | undefined>(sel?: string, errorMsg?: E) => (cb: UpdateCallback<IElement>) => NodeSelector<T>
+  update: <E extends string | undefined>(sel: string, errorMsg?: E) => <CB extends UpdateCallback<any>>(cb: CB) => NodeSelector<T>
   /**
    * Provides a way to inject an update callback which will be applied to all IElement nodes
    * which meet the selector query. If no query is provided, then this will be all `IElement`
    * children of the root node.
    */
-  updateAll: <S extends string | undefined>(sel?: S) => (cb: UpdateCallback<IElement>) => NodeSelector<T>
+  updateAll: <S extends string | undefined>(sel?: S) => <CB extends UpdateCallback<any>>(cb: CB) => NodeSelector<T>
 
   /**
    * Map over all selected items and transform them as needed; results are returned to
@@ -170,7 +212,7 @@ export interface NodeSelector<T extends Container | 'html'> {
    * Filters out all nodes which match the DOM query selector and returns the
    * selector API
    */
-  filter: <S extends string>(selection: S) => NodeSelector<T>
+  filterAll: <S extends string>(selection: S) => NodeSelector<T>
 
   /**
    * Returns the root node with all mutations included

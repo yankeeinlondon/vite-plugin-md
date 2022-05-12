@@ -1,8 +1,9 @@
 import type { Document, DocumentFragment, IElement, IText } from 'happy-dom'
+import { pipe } from 'fp-ts/lib/function'
 import { HappyMishap } from './errors'
-import { createDocument, createElementNode, createFragment, createNode } from './create'
-import type { Container, ContainerOrHtml, DocRoot, HTML } from './happy-types'
-import { isDocument, isElement, isFragment, isTextNode, isTextNodeLike } from './type-guards'
+import { createDocument, createElement, createFragment, createNode } from './create'
+import type { Container, ContainerOrHtml, DocRoot, HTML, UpdateSignature } from './happy-types'
+import { isDocument, isElement, isElementLike, isFragment, isTextNode, isTextNodeLike, isUpdateSignature } from './type-guards'
 import { clone, getNodeType, solveForNodeType, toHtml } from './utils'
 
 /**
@@ -55,14 +56,14 @@ export const extract = <M extends (IElement | IText) | IElement | undefined>(mem
 
 /**
  * Replaces an existing element with a brand new one while preserving the element's
- * relationship to the parent node.
+ * relationship to the parent node (if one exists).
  */
 export const replaceElement = (newElement: IElement | HTML) => (oldElement: IElement): IElement => {
   const parent = oldElement.parentElement
   if (isElement(parent) || isTextNode(parent))
-    parent.replaceChild(createElementNode(newElement), oldElement)
+    parent.replaceChild(createElement(newElement), oldElement)
 
-  const newEl = typeof newElement === 'string' ? createElementNode(newElement) : newElement
+  const newEl = typeof newElement === 'string' ? createElement(newElement) : newElement
 
   if (parent) {
     const children = getChildElements(parent)
@@ -75,7 +76,25 @@ export const replaceElement = (newElement: IElement | HTML) => (oldElement: IEle
     parent.replaceChildren(...updated)
   }
   return newEl
-}/**
+}
+
+/**
+ * A _partially applied_ instance of the `into()` utility; currently waiting
+ * for child/children nodes.
+ *
+ * Note: the return type of this function is the Parent node (in whatever)
+ * container type was passed in. However, child element(s) being wrapped which
+ * had reference to a parent node, will have their parent node updated to
+ * point now to the new parent node instead. This is important for proper
+ * mutation when using the update/updateAll() utilities.
+ */
+export type IntoChildren<P extends DocRoot | IElement | HTML | undefined> =
+  <C extends Container | HTML | UpdateSignature | ContainerOrHtml[]>(
+    /** Content which will be wrapped inside the parent */
+    ...content: C[] | C[][]
+  ) => undefined extends P ? DocumentFragment : P
+
+/**
  * A higher order function which starts by receiving a _wrapper_ component
  * and then is fully applied when the child nodes are passed in.
  *
@@ -86,53 +105,72 @@ export const replaceElement = (newElement: IElement | HTML) => (oldElement: IEle
  * ```
  */
 export const into = <P extends DocRoot | IElement | HTML | undefined>(
-  /** The parent container (IElement, Document, Fragment, or even HTML) */
+  /** The parent container which will wrap the child content */
   parent?: P,
-) => <C extends ContainerOrHtml | ContainerOrHtml[]>(
-    /** Content which will be wrapped inside the parent */
-    ...content: C[]
-  ): undefined extends P ? DocumentFragment : P => {
-  /**
-   * Keeps track of whether the incoming parent was wrapped in a temp
-   * fragment. This is done for HTML passed in as it's the safest way
-   * to process it this way before reverting it back to HTML.
-   */
-  const wrapped = !!(typeof parent === 'string')
-  const p: DocRoot | IElement = wrapped
-    ? createFragment(parent)
-    : isElement(parent)
-      ? clone(parent)
-      : !parent
-          ? createFragment()
-          : parent
+): IntoChildren<P> =>
+    <C extends Container | HTML | UpdateSignature | ContainerOrHtml[]>(
+      ...content: C[] | C[][]
+    ): undefined extends P ? DocumentFragment : P => {
+    /**
+     * Keeps track of whether the incoming parent was wrapped in a temp
+     * fragment. This is done for HTML passed in as it's the safest way
+     * to process it this way before reverting it back to HTML.
+     */
+      const wrapped = !!(typeof parent === 'string')
+      /**
+       * Make sure parent element is a suitable container
+       * type.
+       */
+      let p: DocRoot | IElement = wrapped
+        ? createFragment(parent)
+        : isElement(parent)
+          ? parent
+          : !parent
+              ? createFragment()
+              : parent
 
-  // flatten children passed in to support both arrays and destructed arrays
-  const flat = content.flatMap(c => c as Container | string)
+      const isWithinUpdateMutation = isUpdateSignature(content)
 
-  if (isTextNodeLike(p)) {
-    throw new HappyMishap(
-      `The wrapper node -- when calling into() -- is wrapping a text node; this is not allowed. Parent HTML: "${toHtml(p)}"`, {
-        name: 'into()',
-        inspect: [
-          ['parent node', parent],
-        ],
-      },
-    )
-  }
+      // flatten children passed in to support both arrays and destructed arrays
+      const flat = isUpdateSignature(content)
+        ? [content[0]] // first element is what's being used; discard index and count
+        : content.flatMap(c => c as Container | string)
 
-  const html = flat.map(c => toHtml(c)).join('')
-  const transient = createFragment(html)
-  const parentHasChildElements = p.childElementCount > 0
+      if (isTextNodeLike(p)) {
+        throw new HappyMishap(
+          `The wrapper node -- when calling into() -- is wrapping a text node; this is not allowed. Parent HTML: "${toHtml(p)}"`, {
+            name: 'into()',
+            inspect: [
+              ['parent node', parent],
+            ],
+          },
+        )
+      }
 
-  if (parentHasChildElements)
-    getChildren(transient).forEach(c => p.firstChild.appendChild(clone(c)))
-  else
-    getChildren(transient).forEach(c => p.append(c))
+      const html = flat.map(c => toHtml(c)).join('')
+      const transient = createFragment(html)
+      const parentHasChildElements = p.childElementCount > 0
 
-  return wrapped
-    ? toHtml(p) as undefined extends P ? DocumentFragment : P
-    : p as undefined extends P ? DocumentFragment : P
-}
+      if (parentHasChildElements)
+        getChildren(transient).forEach(c => p.firstChild.appendChild(clone(c)))
+      else
+        getChildren(transient).forEach(c => p.append(c))
+
+      // if this call was made as part of an update operation we'll return
+      // the parent as an IElement (even if it was wrapped in a fragment)
+      // and make sure that the element passed in is replaced with the parent
+      if (isWithinUpdateMutation) {
+        if (isElement(content[0])) {
+          p = isElementLike(p) ? p.firstElementChild : createElement(p)
+
+          content[0].replaceWith(p)
+        }
+      }
+
+      return wrapped && !isWithinUpdateMutation
+        ? toHtml(p) as undefined extends P ? DocumentFragment : P
+        : p as undefined extends P ? DocumentFragment : P
+    }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type ChangeTagNameTo<T extends string> = <E extends IElement | HTML | Document | DocumentFragment>(el: E) => E
@@ -234,48 +272,97 @@ export const prepend = (prepend: IElement | IText | HTML) => (el: IElement): IEl
  * ```
  */
 export const before = (
-  before: IElement | IText | HTML,
-) => <E extends IElement | DocumentFragment>(
-  container: E,
-): E => {
-  const toInject = typeof before === 'string'
-    ? createFragment(before).firstElementChild
-    : before
+  beforeNode: DocumentFragment | IElement | IText | HTML,
+) => <A extends IElement | DocumentFragment | HTML>(
+  afterNode: A,
+): A => {
+  const beforeNormalized = typeof beforeNode === 'string'
+    ? createFragment(beforeNode).firstElementChild
+    : beforeNode
 
   const invalidType = (n: string | Container) => {
     throw new HappyMishap(
     `The before function was passed an invalid container type: ${getNodeType(n)}`,
-    { name: `before(${getNodeType(before)})(invalid)` },
+    { name: `before(${getNodeType(beforeNode)})(invalid)` },
     )
   }
 
-  return solveForNodeType('html')
+  return solveForNodeType()
     .mirror()
     .solver({
+      html: h => pipe(h, createFragment, before(beforeNode), toHtml),
       text: t => invalidType(t),
       node: n => invalidType(n),
-      document: d => invalidType(d),
+      document: (d) => {
+        d.body.prepend(beforeNormalized)
+        return d
+      },
       fragment: (f) => {
-        f.prepend(toInject)
+        f.prepend(beforeNormalized)
         return f
       },
       element: (el) => {
-        if (el.parentElement || el.parentNode) {
+        if (el.parentElement) {
           // inject the node before this one (on parent)
-          el.before(toInject)
+          el.before(beforeNormalized)
 
           return el
         }
-        // if (el.parentElement) { el.parentElement.prepend(toInject, el) }
-        // else if (el.parentNode) { el.parentNode.appendChild(toInject) }
         else {
           throw new HappyMishap(
-            'the before() mutations depends on access to a parent node and neither parentElement nor parentNode properties were available on the passed on container.',
-            { name: `before(${getNodeType(before)})(IElement)` },
+            'the before() utility for depends on having a parent element in the "afterNode" as the parent\'s value must be mutated. If you do genuinely want this behavior then use a DocumentFragment (or just HTML strings)',
+            { name: `before(${getNodeType(beforeNode)})(IElement)` },
           )
         }
       },
-    })(container)
+    })(afterNode)
+}
+
+export const after = (
+  afterNode: IElement | IText | HTML,
+) => <B extends IElement | DocumentFragment | HTML>(
+  beforeNode: B,
+): B => {
+  const afterNormalized = typeof afterNode === 'string'
+    ? createFragment(afterNode).firstElementChild
+    : afterNode
+
+  const invalidType = (n: string | Container) => {
+    throw new HappyMishap(
+    `The after function was passed an invalid container type: ${getNodeType(n)}`,
+    { name: `after(${getNodeType(beforeNode)})(invalid)` },
+    )
+  }
+
+  return solveForNodeType()
+    .mirror()
+    .solver({
+      html: h => pipe(h, createFragment, after(afterNode), toHtml),
+      text: t => invalidType(t),
+      node: n => invalidType(n),
+      document: (d) => {
+        d.body.append(afterNormalized)
+        return d
+      },
+      fragment: (f) => {
+        f.append(afterNormalized)
+        return f
+      },
+      element: (el) => {
+        if (el.parentElement) {
+          // inject the node before this one (on parent)
+          el.after(afterNormalized)
+
+          return el
+        }
+        else {
+          throw new HappyMishap(
+            'the after() utility for depends on having a parent element in the "afterNode" as the parent\'s value must be mutated. If you do genuinely want this behavior then use a DocumentFragment (or just HTML strings)',
+            { name: `after(${getNodeType(afterNode)})(IElement)` },
+          )
+        }
+      },
+    })(beforeNode)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

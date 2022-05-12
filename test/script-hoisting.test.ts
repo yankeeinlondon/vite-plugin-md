@@ -40,7 +40,7 @@ describe('hoisted script blocks', () => {
   it('userland script blocks defined as separate blocks and after script setup', async () => {
     const { component } = await composeFixture('hoisted')
 
-    const scriptBlocks = select(component).filter('script[setup]').findAll('script')
+    const scriptBlocks = select(component).filterAll('script[setup]').findAll('script')
 
     // we should see two blocks from userland but there is also one created
     // by the library code to export the frontmatter

@@ -1,5 +1,6 @@
-import { identity, pipe } from 'fp-ts/lib/function'
-import { addClass, before, changeTagName, createFragment, filterClasses, into, prepend, removeClass, select, toHtml, wrap } from 'happy-wrapper'
+import { flow, identity, pipe } from 'fp-ts/lib/function'
+import type { IElement } from 'happy-wrapper'
+import { addClass, before, changeTagName, clone, createElement, createFragment, describeNode, filterClasses, getClassList, inspect, into, prepend, select, toHtml, wrap } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../types'
 import type { CodeBlockMeta, CodeOptions } from '../types'
 import { Modifier } from '../types'
@@ -19,25 +20,28 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
    * 2. line numbers are displayed _after_ the code and using absolute positioning to
    * appear next to the code
    */
-  const flexLines = () => {
-    fence.codeBlockWrapper = select(fence.codeBlockWrapper)
-      .update(
-        '.code-block',
-        `Couldn't find the ".code-block" in the file ${p.fileName}`,
-      )(el => into(el)(fence.pre, lineNumbersWrapper))
-      .update(
-        '.code-wrapper',
+  const flexLines = () => pipe(
+    fence.codeBlockWrapper,
+    select,
+    // .code-wrapper
+    s => s.update(
+      '.code-block',
         `Couldn't find the ".code-wrapper" in the file ${p.fileName}`,
-      )(el => fence.heading
-        ? into(el)(fence.heading)
-        : el,
-      )
-      // we'll use DIV's -- a block element -- to give PRE's whitespace
-      // property jurisdiction to create a new line
-      // whereas with Prism's output we're just getting SPANs
-      .updateAll('.line')(el => changeTagName('div')(el))
-      .toContainer()
-  }
+    )(el => fence.heading
+      ? before(fence.heading)(el)
+      : el,
+    ),
+    // wrap in PRE and line number sections
+    s => s.update(
+      '.code-block',
+        `Couldn't find the ".code-block" in the file ${p.fileName}`,
+    )(wrap(fence.pre, lineNumbersWrapper)),
+    // we'll use DIV's -- a block element -- to give PRE's whitespace
+    // property jurisdiction to create a new line
+    // whereas with Prism's output we're just getting SPANs
+    s => s.updateAll('.code-line')(changeTagName('div')),
+    s => s.toContainer(),
+  )
 
   /**
    * In tabular structure, code looks like (where `pre` tag is replaced with `table`):
@@ -55,17 +59,8 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
     const toTable = changeTagName('table')
     const toTD = changeTagName('td')
     const toTH = changeTagName('th')
-
-    let lineNumber = select(fence.lineNumbersWrapper)
-      .findFirst('.line-number')
-
-    const getLineNumber = () => {
-      const current = lineNumber
-      if (!current)
-        throw new Error('A line number node appears to be missing!')
-      lineNumber = current.nextElementSibling
-      return toTD(current)
-    }
+    const codeLine = (el: IElement) => getClassList(el).filter(i => i.startsWith('line-')).join(' ')
+    const highlight = (el: IElement) => getClassList(el).includes('highlight') ? ['highlight'] : []
 
     const table = select(fence.pre)
       .update()(toTable)
@@ -75,20 +70,39 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
           ? prepend(toTH(fence.heading.firstElementChild))
           : identity,
       )
-      .updateAll('.code-line')(
-        (el) => {
-          const forParent: string[] = []
-          return pipe(
-            el,
-            addClass('code-line'),
-            removeClass('line'),
-            filterClasses(forParent, /line--{0,1}[0-9]+/),
-            toTD,
-            before(getLineNumber()),
-            wrap(`<tr class="${['code-row', ...forParent].join(' ')}">`),
-          )
-        },
-      )
+      .updateAll('.code-line')((el) => {
+        let misplaced: string[] = []
+        const removed = (classes: string[]) => {
+          misplaced = classes
+        }
+
+        const el2 = pipe(
+          el,
+          toTD,
+          filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row'),
+          into(
+            pipe('<tr class="code-row">', createElement, addClass(misplaced)),
+          ),
+          // (el) => {
+          //   const klasses = [codeLine(el), highlight(el), misplaced].flat()
+
+          //   const tr = pipe('<tr class="code-row"></tr>', createElement, addClass(klasses))
+          //   const lineNumber = createElement(`<td class="line-number">${codeLine(el).replace('line-', '')}</td>`)
+          //   const row = wrap(lineNumber, clone(el))(tr)
+
+          //   el.replaceWith(row)
+          //   return el
+          // },
+        )
+
+        console.log('TR', pipe('<tr class="code-row"></tr>', createElement, addClass(misplaced), toHtml))
+
+        console.log('DISCARD\n', misplaced)
+        console.log('EL\n', toHtml(el2))
+        console.log('PARENT\n', toHtml(el2.parentNode))
+
+        return el
+      })
       .toContainer()
 
     const codeBlockWrapper = select(fence.codeBlockWrapper)
@@ -98,15 +112,15 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
       )(codeBlock => into(codeBlock)([table]))
       .toContainer()
 
-    return { fence, codeBlockWrapper }
+    return codeBlockWrapper
   }
 
   switch (o.layoutStructure) {
     case 'flex-lines':
-      flexLines()
+      fence.codeBlockWrapper = flexLines()
       break
     case 'tabular':
-      tabularFormatting()
+      fence.codeBlockWrapper = tabularFormatting()
       break
   }
 

@@ -2,19 +2,23 @@ import { pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
 import {
   addClass,
+  after,
   before,
   changeTagName,
   clone,
   createDocument,
-  createElementNode,
+  createElement,
   createFragment,
   createTextNode,
+  describeNode as desc,
+  filterClasses,
   getChildren,
   getClassList,
   getNodeType,
   inspect,
   into,
   isElementLike,
+  isHappyWrapperError,
   nodeBoundedByElements,
   nodeChildrenAllElements,
   prepend,
@@ -24,7 +28,6 @@ import {
   select,
   setAttribute,
   toHtml,
-  tree,
   wrap,
 } from '../src'
 
@@ -134,43 +137,64 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(textNode.hasChildNodes()).toBeFalsy()
   })
 
-  it('changeTag() utility works as expected atomically with different container types', () => {
+  it('changeTag() utility works as expected with all container types', () => {
     const html = '<span class="foobar">hello world</span>'
     const toDiv = changeTagName('div')
     // html
     expect(toDiv(html)).toBe('<div class="foobar">hello world</div>')
     // element
-    expect(toHtml(toDiv(createElementNode(html)))).toBe('<div class="foobar">hello world</div>')
+    expect(
+      toHtml(
+        toDiv(createElement(html)),
+      ),
+    ).toBe('<div class="foobar">hello world</div>')
     // fragment
-    const f1 = createFragment(html)
-    const f = toDiv(f1)
-    expect(toHtml(f)).toBe('<div class="foobar">hello world</div>')
-  })
-
-  it('replaceElement() can replace an element while preserving parental relationship', () => {
-    const html = '<div class="parent"><span class="foobar">hello world</span></div>'
-    const onlySpan = html.replace(/div/g, 'span')
-    const onlyDiv = html.replace(/span/g, 'div')
-    const outside = replaceElement(createElementNode(onlySpan))(createElementNode(html))
-    // basic replacement where parent is not defined
-    expect(toHtml(outside), onlySpan)
-
-    const parent = createElementNode(html)
-
-    const interior = select(clone(parent))
-      .updateAll('.foobar')(replaceElement('<div class="foobar">hello world</div>'))
-      .toContainer()
-
-    expect(toHtml(interior)).toBe(onlyDiv)
+    expect(
+      toHtml(
+        toDiv(createFragment(html)),
+      ),
+    ).toBe('<div class="foobar">hello world</div>')
   })
 
   it('changeTag() can preserve parent node', () => {
     const toDiv = changeTagName('div')
-    expect(toDiv('<span class="foobar">hello world</span>')).toBe('<div class="foobar">hello world</div>')
+    expect(
+      toDiv('<span class="child">hello world</span>'),
+    ).toBe('<div class="child">hello world</div>')
 
-    const html = '<div class="parent"><span class="foobar">hello world</span></div>'
-    const updated = select(html).updateAll('.foobar')(toDiv).toContainer()
-    expect(updated).toBe('<div class="parent"><div class="foobar">hello world</div></div>')
+    const html = '<div class="parent"><span class="child">hello world</span></div>'
+    const updated = select(html).updateAll('.child')(toDiv).toContainer()
+    expect(updated).toBe('<div class="parent"><div class="child">hello world</div></div>')
+
+    const node = createElement(html)
+    const child = select(node).findFirst('.child', 'did not find child selector!')
+    toDiv(child)
+    expect(toHtml(node)).toBe('<div class="parent"><div class="child">hello world</div></div>')
+  })
+
+  it('replaceElement() replaces an element while preserving parental relationship', () => {
+    const html = '<div class="parent"><span class="child">hello world</span></div>'
+    const onlySpan = html.replace(/div/g, 'span')
+    const onlyDiv = html.replace(/span/g, 'div')
+    const outside = replaceElement(
+      createElement(onlySpan))(createElement(html),
+    )
+    // basic replacement where parent is not defined
+    expect(toHtml(outside), onlySpan)
+
+    // passing in the node during updateAll replaces the node
+    const parent = createElement(html)
+    const updated = select(parent)
+      .updateAll('.child')(replaceElement('<div class="child">hello world</div>'))
+      .toContainer()
+    expect(toHtml(updated)).toBe(onlyDiv)
+
+    // pulling out a node with a query and updated externally still
+    // produces mutation on parent node
+    const parent2 = createElement(html)
+    const child = select(parent2).findFirst('.child', 'did not find child element!')
+    replaceElement('<div class="child">hello world</div>')(child)
+    expect(toHtml(parent2)).toBe(onlyDiv)
   })
 
   it('select() utility\'s find functionality', () => {
@@ -240,7 +264,7 @@ describe('HappyDom\'s can be idempotent', () => {
       .toContainer()
     expect(toHtml(updatedFrag)).toBe(html.replace(/span/g, 'div'))
 
-    const updatedElement = select(createElementNode(html.trim()))
+    const updatedElement = select(createElement(html.trim()))
       .updateAll('.line')(toDiv)
       .toContainer()
     expect(toHtml(updatedElement)).toBe(html.trim().replace(/span/g, 'div'))
@@ -251,18 +275,40 @@ describe('HappyDom\'s can be idempotent', () => {
     const html = '<span>foobar</span>'
 
     expect(toHtml(createFragment(html)), 'plain html').toBe(html)
-    expect(toHtml(createFragment(createElementNode(html))), 'html as element').toBe(html)
+    expect(toHtml(createFragment(createElement(html))), 'html as element').toBe(html)
     expect(toHtml(createFragment(text)), 'plain text').toBe(text)
     expect(toHtml(createFragment(createTextNode(text))), 'text as text node').toBe(text)
   })
 
   it('before() allows a container to be injected before another container', async () => {
-    const wrap = createElementNode('<div class="wrapper"></div>')
+    const wrap = createElement('<div class="wrapper"></div>')
     const one = '<span class="item one">one</span>'
     const two = '<span class="item two">two</span>'
     const three = '<span class="item three">three</span>'
     const wrappedOneTwo = into(wrap)(one, two)
+    // basic test with HTML
+    const t1 = before(two)(one)
+    expect(t1).toBe(`${two}${one}`)
+    // a fragment should work the same
+    const One = createFragment(one)
+    expect(One.parentElement).toBeFalsy()
+    const t2 = before(two)(One)
+    expect(toHtml(t2)).toBe(`${two}${one}`)
 
+    // an element without a parent, however, has no _natural parent_
+    // so it should throw an error in this case
+    const el = createElement(one)
+    try {
+      before(two)(el)
+      throw new Error('element should have thrown error')
+    }
+    catch (err) {
+      expect(isHappyWrapperError(err)).toBeTruthy()
+      if (isHappyWrapperError(err))
+        expect(err.name).toContain('before')
+    }
+
+    // intent is for: [one, three, two]
     const placed = select(wrappedOneTwo)
       .update('.two', 'did not find "two" class!')((el) => {
         expect(getClassList(el)).toContain('two')
@@ -282,6 +328,13 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(items[0].textContent).toContain('one')
     expect(items[1].textContent).toContain('three')
     expect(items[2].textContent).toContain('two')
+  })
+
+  it('after() works as expected', () => {
+    const one = '<span class="item one">one</span>'
+    const two = '<span class="item two">two</span>'
+    const t1 = after(two)(one)
+    expect(t1).toBe(`${one}${two}`)
   })
 
   it('into() with multiple nodes injected', () => {
@@ -308,7 +361,7 @@ describe('HappyDom\'s can be idempotent', () => {
       `HTML wrapper passed in returns HTML with children inside, instead got:\n${inspect(f, true)}`,
     ).toBe(`<div class="my-wrapper">${html}</div>`)
     // try as an IElement
-    const el = into(createElementNode(wrapper))(indent, text, element, closeout)
+    const el = into(createElement(wrapper))(indent, text, element, closeout)
     expect(
       toHtml(el),
       `HTML wrapper passed in returns HTML with children inside, instead got:\n${inspect(el, true)}`,
@@ -325,6 +378,23 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(
       toHtml(into('<div class="wrapper">')(indent, text, element, closeout)),
     ).toBe(`<div class="wrapper">${html}</div>`)
+  })
+
+  it('into() using with updateAll() utility is able to mutate tree correctly', () => {
+    // NOTE: the issue we're testing for is that the selector passed to updateAll()
+    // is an IElement which _should_ have a parent element that contains it. When
+    // when we call into() we are changing the hierarchy so that the parent of the incoming
+    // element must now point to the _new_ parent node and this parent node in turn will
+    // point to the incoming node
+    const html = '<div class="container"><span class="one item">one</span><span class="two item">two</span></div>'
+    const wrapEach = '<span class="wrap-each"></span>'
+    const expectedOutcome = '<div class="container"><span class="wrap-each"><span class="one item">one</span></span><span class="wrap-each"><span class="two item">two</span></span></div>'
+    const sel = select(html)
+    const wrapper = into(wrapEach)
+    const result = sel
+      .updateAll('.item')(wrapper)
+      .toContainer()
+    expect(result).toBe(expectedOutcome)
   })
 
   it('wrap() works as expected', () => {
@@ -346,6 +416,30 @@ describe('HappyDom\'s can be idempotent', () => {
 
     const w4 = wrap(middling)(clone(wrapper))
     expect(toHtml(w4)).toBe(`<div class="wrapper">${middling}</div>`)
+
+    const wrapper2 = '<div class="wrapper"><span class="interior"></span></div>'
+    const anotherElement = '<span class="another">another element</span>'
+    const wrapped = select(wrapper2)
+      .update('.interior')(wrap(anotherElement))
+      .toContainer()
+    expect(wrapped).toBe('<div class="wrapper"><span class="interior"><span class="another">another element</span></span></div>')
+  })
+
+  it('wrap() using with updateAll() utility is able to mutate tree correctly', () => {
+    // NOTE: the issue we're testing for is that the selector passed to updateAll()
+    // is an IElement which _should_ have a parent element that contains it. When
+    // when we call into() we are changing the hierarchy so that the parent of the incoming
+    // element must now point to the _new_ parent node and this parent node in turn will
+    // point to the incoming node
+    const html = '<div class="container"><span class="one item">one</span><span class="two item">two</span></div>'
+    const wrapEach = '<span class="wrap-each"></span>'
+    const expectedOutcome = '<div class="container"><span class="one item">one<span class="wrap-each"></span></span><span class="two item">two<span class="wrap-each"></span></span></div>'
+    const sel = select(html)
+    const wrapper = wrap(wrapEach)
+    const result = sel
+      .updateAll('.item')(wrapper)
+      .toContainer()
+    expect(result).toBe(expectedOutcome)
   })
 
   it('setAttribute() utility', () => {
@@ -394,7 +488,7 @@ describe('HappyDom\'s can be idempotent', () => {
 
   it('addClass() utility is able to add a class to the top-most node in an IElement', () => {
     const html = '<div class="foobar">testing</div>'
-    const el = createElementNode(html)
+    const el = createElement(html)
     const plusOne = pipe(el, addOne)
     const plusTwo = pipe(clone(plusOne), addTwo)
 
@@ -417,6 +511,27 @@ describe('HappyDom\'s can be idempotent', () => {
 
     expect(pipe(stillStanding, getClassList)).toContain('foobar')
     expect(pipe(empty, getClassList)).lengthOf(0)
+  })
+
+  it('filterClasses() utility removes classes and optionally can pass in a callback', () => {
+    const el = '<span class="foo bar baz color-1 color-2 color-3">text</span>'
+    const noFoo = pipe(el, createElement, filterClasses('foo'), toHtml)
+    expect(noFoo).toBe('<span class="bar baz color-1 color-2 color-3">text</span>')
+
+    let removed: string[] = []
+    const fancyRemoval = pipe(el, createElement, filterClasses(
+      (r) => {
+        removed = r
+      },
+      'foo', 'bar', /color-/,
+    ), toHtml)
+
+    expect(fancyRemoval).toBe('<span class="baz">text</span>')
+    expect(removed).toContain('foo')
+    expect(removed).toContain('bar')
+    expect(removed).toContain('color-1')
+    expect(removed).toContain('color-2')
+    expect(removed).toContain('color-3')
   })
 
   it('safeString', () => {

@@ -1,3 +1,4 @@
+import { string } from 'fp-ts'
 import { pipe } from 'fp-ts/lib/function'
 import type { IElement, INode } from 'happy-dom'
 import { createFragment } from './create'
@@ -117,29 +118,29 @@ export const addClass = <A extends string[] | string[][]>(
 }
 
 export type Filter = (string | RegExp)
-/**
- * an array of filters but with an array passed in as first parameter, using
- * this data structure the initial array will be treated as "memory" for the
- * class items which were removed.
- */
-export type FiltersWithMemory = [string[], ...Filter[]]
+export type FilterCallback = (removed: string[]) => void
+export type FiltersWithCallback = [FilterCallback, ...Filter[]]
 
-function isFiltersWithMemory(filters: Filter[] | FiltersWithMemory): filters is FiltersWithMemory {
-  return Array.isArray(filters[0])
+function hasFilterCallback(filters: Filter[] | FiltersWithCallback): filters is FiltersWithCallback {
+  return typeof filters[0] === 'function'
 }
 
 /**
- * Filters classes out to remove from a given element. As many filters as desired may be added where a
- * filter is:
+ * Filters classes out from a given element using _filters_, where a filter:
+ *
  * - string - when a string it will compare for a direct match
  * - RegExp - will run the RegExp's `test(class)` method
  *
- * Optionally you may pass in a string array property as the first parameter and this will then
- * be populated with the filtered classes.
+ * Optionally you may pass in a callback function as the first parameter in the
+ * the list and this callback will be then called with all filtered properties
+ * passed to it. This is useful for creating desirable side-effects like _moving_
+ * the classes to some other DOM element (for instance).
  */
-export const filterClasses = <A extends Filter[] | FiltersWithMemory>(
+export const filterClasses = <A extends Filter[] | [FilterCallback, ...Filter[]]>(
   ...args: A
-) => <D extends DocRoot | IElement | HTML>(doc: D): D => {
+) => <D extends DocRoot | IElement | HTML>(
+    doc: D,
+  ): D => {
   const el = isDocument(doc) || isFragment(doc)
     ? doc.firstElementChild as IElement
     : isElement(doc)
@@ -148,18 +149,25 @@ export const filterClasses = <A extends Filter[] | FiltersWithMemory>(
   if (!el)
     throw new HappyMishap('An invalid container was passed into filterClasses()!', { name: 'filterClasses', inspect: doc })
 
-  const filters = isFiltersWithMemory(args) ? args.slice(1) as Filter[] : args as Filter[]
-  const memory: string[] = isFiltersWithMemory(args) ? args[0] : []
+  const filters = hasFilterCallback(args) ? args.slice(1) as Filter[] : args as Filter[]
+  const cb = hasFilterCallback(args) ? args[0] : undefined
   const classes = getClassList(el)
+  const removed: string[] = []
 
   classes.forEach((klass) => {
-    const matched = filters.every(f => typeof f === 'string'
-      ? f === klass
-      : f.test(klass),
+    const matched = !filters.every(f =>
+      typeof f === 'string'
+        ? f.trim() !== klass.trim()
+        : !f.test(klass),
     )
     if (matched)
-      memory.push(klass)
+      removed.push(klass)
   })
+
+  setClass(classes.filter(k => !removed.includes(k)).join(' '))(doc)
+
+  if (cb)
+    cb(removed)
 
   return doc
 }

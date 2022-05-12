@@ -1,7 +1,6 @@
 import { extract, select, toHtml } from 'happy-wrapper'
 import type { IElement } from 'happy-dom'
 import type { HTML } from 'happy-wrapper'
-import { identity } from 'fp-ts/lib/function'
 import { isVue2, transformer, wrap } from '../utils'
 import type {
   ResolvedOptions,
@@ -85,7 +84,7 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
   }
 
   const regularScriptBlocks = hoistScripts.scripts.map(
-    s => select(s).filter('script[setup]').toContainer(),
+    s => select(s).filterAll('script[setup]').toContainer(),
   ).filter(i => i).join('\n')
   /** all `<setup script>` blocks */
   const scriptSetupBlocks = hoistScripts.scripts.map(

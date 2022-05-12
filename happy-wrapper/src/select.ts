@@ -1,8 +1,8 @@
 import type { Document, DocumentFragment, IElement } from 'happy-dom'
 import { createFragment } from './create'
-import { describe, inspect } from './diagnostics'
+import { describeNode, inspect } from './diagnostics'
 import { HappyMishap } from './errors'
-import type { HTML, MapCallback, NodeSelector, UpdateCallback } from './happy-types'
+import type { HTML, MapCallback, NodeSelector, UpdateCallback, UpdateCallback_Native } from './happy-types'
 import { getChildElements } from './nodes'
 import { isDocument, isElement, isFragment, isTextNode } from './type-guards'
 import { clone, getNodeType, toHtml } from './utils'
@@ -63,16 +63,12 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
      * you want to state the error message.
      */
     update: (
-      selection?: string,
+      selection: string,
       errorIfNotFound: boolean | string = false,
-    ) => (mutate: UpdateCallback<IElement>) => {
-      const el = selection
-        ? rootNode.querySelector(selection) as IElement | null
-        : isDocument(rootNode) || isFragment(rootNode)
-          ? rootNode.firstElementChild
-          : isElement(rootNode)
-            ? rootNode
-            : null
+    ) => <CB extends UpdateCallback<any>>(
+      mutate: CB,
+    ): NodeSelector<T> => {
+      const el = rootNode.querySelector(selection) as IElement | null
 
       if (!selection && el === null)
         throw new HappyMishap('Performing an update on a root selection which is a Text node is not allowed!', { name: 'update()' })
@@ -80,7 +76,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
         throw new HappyMishap('Performing an update on a document or fragment which has more than a single element as a child is not expected! Try either updateAll() or use a DOM selection query!', { name: 'update()' })
 
       if (el) {
-        const results = mutate(el, 0, 1)
+        const results = (mutate as UpdateCallback_Native)(el, 0, 1)
 
         if (results === false)
           el.remove()
@@ -110,7 +106,11 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
      * if nothing is passed in then you'll get the array of `IElement` nodes which
      * are direct descendants of the root selector.
      */
-    updateAll: <S extends string | undefined>(selection?: S) => (mutate: UpdateCallback<IElement>) => {
+    updateAll: <S extends string | undefined>(
+      selection?: S,
+    ) => <CB extends UpdateCallback<any>>(
+      mutate: CB,
+    ): NodeSelector<T> => {
       /**
         * The array of DOM nodes which have been selected.
         */
@@ -121,24 +121,20 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
       ) as IElement[]
 
       elements.forEach((el, idx) => {
-        if (isElement(el) || isTextNode(el)) {
+        if (isElement(el)) {
           let elReplacement: IElement | false
           try {
-            // const cloned = clone(el)
-            elReplacement = mutate(el, idx, elements.length)
+            elReplacement = (mutate as UpdateCallback_Native)(el, idx, elements.length)
           }
           catch (e) {
-            throw new HappyMishap(`updateAll(): the passed in callback to select(container).updateAll('${selection}')():  \n\n\tmutate(${describe(el)}, ${idx} idx, ${elements.length} elements)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })
+            throw new HappyMishap(`updateAll(): the passed in callback to select(container).updateAll('${selection}')():  \n\n\tmutate(${describeNode(el)}, ${idx} idx, ${elements.length} elements)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })
           }
-          // Expects an element to be returned
-          if (isElement(elReplacement))
-            el.replaceWith(elReplacement)
-
           // an explicit `false` return indicates the intent to remove
-          else if (elReplacement === false)
+          if (elReplacement === false)
             el.remove()
-          else
-            throw new HappyMishap(`The return value from the "select(container).updateAll('${selection}')(${describe(el)}, ${idx} idx, ${elements.length} elements)" call was invalid! Valid return values are FALSE or an IElement but instead got: ${typeof elReplacement}.`, { name: 'select().updateAll -> invalid return value' })
+          // an element returned is the expected return but if not then throw an error
+          else if (!isElement(elReplacement))
+            throw new HappyMishap(`The return value from the "select(container).updateAll('${selection}')(${describeNode(el)}, ${idx} idx, ${elements.length} elements)" call was invalid! Valid return values are FALSE or an IElement but instead got: ${typeof elReplacement}.`, { name: 'select().updateAll -> invalid return value' })
         }
 
         else {
@@ -174,10 +170,15 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
 
     /**
      * Filters out `IElement` nodes out of the selected DOM tree which match
-     * a particular DOM query
+     * a particular DOM query. Also allows passing in an optional callback to
+     * receive elements which were filtered out
      */
-    filter: <S extends string>(selection: S) => {
-      rootNode.querySelectorAll(selection).map(el => el.remove())
+    filterAll: <S extends string>(selection: S, cb?: ((removed: IElement) => void)) => {
+      rootNode.querySelectorAll(selection).forEach((el) => {
+        if (cb)
+          cb(el)
+        el.remove()
+      })
 
       return api
     },

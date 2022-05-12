@@ -1,3 +1,5 @@
+export { Document, DocumentFragment, IElement, IText} from 'happy-dom'
+
 export * from './attributes'
 export * from './create'
 export * from './diagnostics'

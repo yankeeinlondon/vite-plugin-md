@@ -7,16 +7,19 @@ import { getChildren, into } from './nodes'
 import { isContainer, isElement, isElementLike, isTextNode, isTextNodeLike } from './type-guards'
 import { getNodeType, solveForNodeType, toHtml } from './utils'
 
-export const describe = solveForNodeType()
+export const describeNode = (node: Container | HTML): string => {  
+  return solveForNodeType()
   .outputType<string>()
   .solver({
-    html: h => pipe(h, createFragment, describe),
+    html: h => pipe(h, createFragment, describeNode),
     node: n => `node${descClass(n)}`,
     text: t => `text[${t.textContent.slice(0, 5).replace('\n', '')}...]`,
     element: e => `element[${e.tagName.toLowerCase()}]${descClass(e)}`,
     fragment: f => `fragment${descFrag(f)}`,
-    document: d => `doc[head: ${!!d.head}, body: ${!!d.body}]: ${describe(createFragment(d.body))}`,
-  })
+    document: d => `doc[head: ${!!d.head}, body: ${!!d.body}]: ${describeNode(createFragment(d.body))}`,
+  })(node)
+}
+
 export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as T): false extends T ? Record<string, any> : string => {
   const solver = solveForNodeType()
     .outputType<Record<string, any>>()
@@ -48,7 +51,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
               html: toHtml(i),
               nodeType: getNodeType(i),
               hasParentElement: !!i.parentElement,
-              hasParentNode: !!i.parentNode,
+              hasParentNode: i.parentNode ? `${getNodeType(i.parentNode)} [type:${i.parentNode.nodeType}]` : false,
               childNodes: i.childNodes.length,
             }
           }
@@ -71,7 +74,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
               html: toHtml(i),
               nodeType: getNodeType(i),
               hasParentElement: !!i.parentElement,
-              hasParentNode: !!i.parentNode,
+              hasParentNode: i.parentNode ? `${getNodeType(i.parentNode)} [type:${i.parentNode.nodeType}]` : false,
               childNodes: i.childNodes.length,
             }
           }
@@ -96,7 +99,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
          * a connected parent in a DOM tree.
          */
         hasNaturalParent: !!x.parentElement,
-        ...(x.parentElement ? { parent: describe(x.parentElement) } : {}),
+        ...(x.parentElement ? { parent: describeNode(x.parentElement) } : {}),
         textContent: x.textContent,
         children: `${x.children.length} / ${x.childNodes.length}`,
         childContent: x.childNodes?.map(i => i.textContent),
@@ -106,7 +109,7 @@ export const inspect = <T extends boolean>(item?: unknown, toJSON: T = false as 
               html: toHtml(i),
               nodeType: getNodeType(i),
               hasParentElement: !!i.parentElement,
-              hasParentNode: !!i.parentNode,
+              hasParentNode: i.parentNode ? `${getNodeType(i.parentNode)} [type:${i.parentNode.nodeType}]` : false,
               childNodes: i.childNodes.length,
             }
           }
@@ -264,7 +267,7 @@ function descClass(n: Container) {
 }
 
 function descFrag(n: DocumentFragment) {
-  const children = getChildren(n).map(i => describe(i))
+  const children = getChildren(n).map(i => describeNode(i))
   return isElementLike(n)
     ? `[el: ${n.firstElementChild.tagName.toLowerCase()}]${descClass}`
     : isTextNodeLike(n)

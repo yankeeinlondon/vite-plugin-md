@@ -1,5 +1,5 @@
 import { flow, pipe } from 'fp-ts/lib/function'
-import { createDocument, createElementNode, createFragment, createTextNode } from './create'
+import { createDocument, createElement, createFragment, createTextNode } from './create'
 import { HappyMishap } from './errors'
 import type { Container, ContainerOrHtml, HTML, NodeSolver, NodeSolverReceiver, NodeType } from './happy-types'
 import { isDocument, isElement, isElementLike, isFragment, isTextNode } from './type-guards'
@@ -126,7 +126,7 @@ export function clone<T extends Container | HTML>(container: T): T {
       document: (d) => {
         return createDocument(d.body.innerHTML, d.head.innerHTML)
       },
-      element: e => pipe(e, toHtml, createElementNode),
+      element: e => pipe(e, toHtml, createElement),
       node: flow(toHtml, createFragment, f => f.firstElementChild ? f.firstElementChild : f.firstChild),
       text: flow(toHtml, createTextNode),
     })

@@ -10,10 +10,6 @@ export interface StackLine {
   file: string | undefined
 }
 
-const showCallsite = (cs: CallSite | undefined) => cs
-  ? `\n  - ${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() || ''}${cs.getFunctionName() || cs.getMethodName() || cs.getFunction() ? '(), ' : ''}${relative(process.cwd(), cs.getFileName() || '')}:${cs.getLineNumber() || ''}`
-  : ''
-
 export class HappyMishap extends Error {
   public name = 'HappyWrapper'
   public readonly kind: 'HappyWrapper' = 'HappyWrapper'
@@ -49,7 +45,8 @@ export class HappyMishap extends Error {
       this.name = `HappyWrapper::${options.name || 'unknown'}`
 
     try {
-      this.structuredStack = this.structuredStack = callsites().slice(1).map((i) => {
+      const sites = callsites()
+      this.structuredStack = (sites || []).slice(1).map((i) => {
         return {
           fn: i.getFunctionName() || i.getMethodName() || i.getFunction()?.name || '',
           line: i.getLineNumber() || undefined,

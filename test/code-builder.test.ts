@@ -60,9 +60,9 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     const block = dom.findAll('.code-block')
 
     expect(lines.length).toBe(5)
-    expect(lineNumCols.length, 'each line should have a .line-numbers-mode').toBe(5)
     expect(lineNumberMode.length, '.line-numbers-mode should be found once').toBe(1)
     expect(linesWrapper.length).toBe(1)
+    expect(lineNumCols.length, '.line-numbers selector').toBe(5)
     expect(block.length, 'the wrapping table for cols/line-numbers should be found').toBe(1)
 
     // snapshot
@@ -142,6 +142,7 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     )
 
     const highlighted = select(html).findAll('.highlight')
+
     const line1 = select(html).findFirst('.line-1')
     const line2 = select(html).findFirst('.line-2')
     const line3 = select(html).findFirst('.line-3')
@@ -298,5 +299,25 @@ describe('code() builder using Shiki', () => {
   it.todo('switching to Shiki on basic template works as expected')
   it.todo('Shiki works with light/dark mode')
   it.todo('"unknown language" fallback is used when language stated but not matched', async () => {
+  })
+})
+
+describe('table format for code blocks', () => {
+  it('a code block can be converted to use a tabular HTML output', async () => {
+    const { html } = await composeFixture('ts-code-block', {
+      builders: [code({
+        lineNumbers: true,
+        layoutStructure: 'tabular',
+      })],
+    })
+
+    const sel = select(html)
+    const codeLines = sel.findAll('.code-line')
+    const lineNumLines = sel.findAll('.line-number')
+
+    codeLines.forEach(l => expect(l.tagName).toBe('TD'))
+
+    // eslint-disable-next-line no-console
+    console.log({ codeLines: codeLines.length, lineNumLines: lineNumLines.length, html })
   })
 })

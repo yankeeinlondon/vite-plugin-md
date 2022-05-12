@@ -2,50 +2,29 @@ import { pipe } from 'fp-ts/lib/function'
 import type { DocumentFragment, IElement } from 'happy-dom'
 import {
   addClass,
-  before,
-  createElementNode,
-  inspect,
-  removeClass,
+  createElement,
+  into,
   select,
-  toHtml,
   wrap,
 } from 'happy-wrapper'
 import type { CodeBlockMeta, CodeOptions } from '../types'
 
-const applyLineClasses = (
-  fence: CodeBlockMeta<'dom'>,
-  genericLineClass: string,
-  aboveTheFold = 0,
-) => (section: DocumentFragment) => {
-  const evenOdd = (lineNumber: number) => (el: IElement) => lineNumber % 2 === 0
-    ? addClass('even')(el)
-    : addClass('odd')(el)
+const evenOdd = (lineNumber: number) => (el: IElement) => lineNumber % 2 === 0
+  ? addClass('even')(el)
+  : addClass('odd')(el)
 
-  const firstLast = (lineNumber: number) => (el: IElement) => lineNumber === 1
-    ? addClass('first-row')(el)
-    : lineNumber === fence.codeLinesCount
-      ? addClass('last-row')(el)
-      : el
+const firstLast = (lineNumber: number, lineCount: number) => (el: IElement) => lineNumber === 1
+  ? addClass('first-row')(el)
+  : lineNumber === lineCount
+    ? addClass('last-row')(el)
+    : el
 
-  const lineNumber = (i: number) => i + 1 - aboveTheFold
-  const specificLine = (i: number) => {
-    return lineNumber(i) > 0 ? `line-${lineNumber(i)}` : `negative line-${Math.abs(lineNumber(i))}`
-  }
+const lineNumber = (i: number, aboveTheFold: number) => i + 1 - aboveTheFold
 
-  const domSelector = `.${genericLineClass.replace(/^\./, '')}`
-  const s = select(section)
-    .updateAll(domSelector)(
-      (el, idx) => pipe(
-        el,
-        evenOdd(lineNumber(idx as number)),
-        firstLast(lineNumber(idx as number)),
-        removeClass('line'),
-        addClass(specificLine(idx as number)),
-      ),
-    )
-    .toContainer()
-
-  return s
+const specificLine = (i: number, aboveTheFold: number) => {
+  return lineNumber(i, aboveTheFold) > 0 
+    ? `line-${lineNumber(i, aboveTheFold)}` 
+    : `negative-line-${Math.abs(lineNumber(i, aboveTheFold))}`
 }
 
 /**
@@ -56,20 +35,21 @@ const addLinesToContainer = (fence: CodeBlockMeta<'dom'>, o: CodeOptions, aboveT
   return (wrapper: DocumentFragment) => {
     const children: IElement[] = []
     for (let lineNumber = 1 - aboveTheFold; fence.codeLinesCount >= lineNumber; lineNumber++) {
-      /** choose the tagName based on layout config */
-      const tagName = o.layoutStructure === 'flex-lines'
-        ? 'div'
-        : o.layoutStructure === 'tabular'
-          ? 'td'
-          : 'span'
-
-      const child = createElementNode(`<${tagName} class="line-number">${lineNumber}</${tagName}>`)
+      const tagName = 'span'
+      const child = createElement(`<${tagName} class="line-number">${lineNumber}</${tagName}>`)
       children.push(child)
     }
 
     return wrap(children)(wrapper)
   }
 }
+
+const addLineClasses = (aboveTheFold: number) =>  (el: IElement, idx: number = 0, total: number = 0) => pipe(
+  el,
+  evenOdd(lineNumber(idx, aboveTheFold)),
+  firstLast(lineNumber(idx, aboveTheFold), total),
+  addClass(specificLine(idx, aboveTheFold)),
+)
 
 /**
  * - Builds up the full DOM tree for line numbers and puts it back into the
@@ -82,35 +62,34 @@ export const updateLineNumbers = (o: CodeOptions) =>
     let linesAboveTheFold = 0
     let emptyLines = 0
     const aboveTheFoldCode = fence.aboveTheFoldCode
-      ? select(fence.aboveTheFoldCode)
-        .updateAll('.line-above')((el, idx, total) => {
-          if (el.textContent.length === 0 || (idx === 1 && el.textContent.trim() === '//')) {
-            emptyLines++
-            linesAboveTheFold = (total || 0) - emptyLines
-            return false
-          }
-          else {
-            linesAboveTheFold = (total || 0) - emptyLines
-            return pipe(
-              el,
-              addClass(['code-line']),
-            )
-          }
-        }).toContainer()
+      ? pipe(
+          fence.aboveTheFoldCode,
+          select,
+          s => s.updateAll('.code-line')(el => {
+          const isEmptyLine = el.textContent.length === 0
+          const isEmptyComment = el.textContent.trim() === '//'
+          return isEmptyComment || isEmptyLine ? false : el
+        }),
+        s => s.toContainer()
+      )
       : undefined
 
     /** the code with meta-classes added and including the "aboveTheFold" code */
     const code: DocumentFragment = pipe(
       aboveTheFoldCode
-        ? before(aboveTheFoldCode.firstElementChild)(fence.code)
+        ? into()(aboveTheFoldCode, fence.code)
         : fence.code,
-      applyLineClasses(fence, 'code-line', linesAboveTheFold),
+      select,
+      s => s.updateAll('.code-line')(addLineClasses(linesAboveTheFold)),
+      s => s.toContainer()
     )
 
     const lineNumbersWrapper = pipe(
       fence.lineNumbersWrapper,
       addLinesToContainer(fence, o, linesAboveTheFold),
-      applyLineClasses(fence, 'line-number', linesAboveTheFold),
+      select,
+      s => s.updateAll('.code-line')(addLineClasses(linesAboveTheFold)),
+      s => s.toContainer()
     )
 
     return {

@@ -1,6 +1,6 @@
 import type { Document, DocumentFragment, IElement, IText } from 'happy-dom'
 import { createFragment } from './create'
-import type { Container, DocRoot, InspectionTuple } from './happy-types'
+import type { Container, DocRoot, InspectionTuple, UpdateCallback_Native, UpdateSignature } from './happy-types'
 import type { HappyMishap } from './errors'
 
 export function isHappyWrapperError(err: unknown): err is HappyMishap {
@@ -79,22 +79,32 @@ export const hasSingularElement = <
 }
 
 export function isElement(el: unknown): el is IElement {
-  return typeof el === 'object' && el !== null && 'outerHTML' in (el as Object) && 'previousElementSibling' in (el as Object)
+  return typeof el === 'object' && el !== null && 'outerHTML' in (el as Object) && (el as any).nodeType === 1
 }
 
 /**
  * determines if a Doc/DocFragment is a wrapper for only a singular
  * `IElement` node
  */
-export const isElementLike = <D extends DocRoot>(
-  container: D,
+export const isElementLike = (
+  container: unknown,
 ) => {
   if (isDocument(container))
     return container.body.childNodes.length === 1 && container.body.firstChild === container.body.firstElementChild
 
   return (
-    isDocument(container) && container.body.childNodes.length === 1 && container.body.firstChild === container.body.firstElementChild
-  ) || (
     isFragment(container) && container.childNodes.length === 1 && container.firstChild === container.firstElementChild
   )
+}
+
+/**
+ * Type guard which detects that the incoming calling signature matches
+ * that of the `select()` utilities update/updateAll operation.
+ */
+export const isUpdateSignature = (args: unknown): args is UpdateSignature => {
+  return Array.isArray(args)
+    && args.length === 3
+    // && (typeof args[0] === 'string' || typeof args[0] === 'object')
+    && typeof args[1] === 'number'
+    && typeof args[2] === 'number'
 }

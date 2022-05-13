@@ -13,15 +13,25 @@ import type { Pipeline, PipelineStage } from '../../../../types'
 import type { CodeBlockMeta } from '../../types'
 
 /**
-   * In tabular structure, code looks like (where `pre` tag is replaced with `table`):
+   * In tabular structure, code is laid out in the following structure:
    * ```html
-   * <table class="lang-xxx" data-lang="xxx">
-   *    <tr class="heading"><th>heading</th></tr>
-   *    <tr class="row line line-1 odd first-line">
-   *      <td class="line-number">...</td>
-   *      <td class="code-line">...</td>
-   *    </tr>
-   * </table>
+   * <div class="code-wrapper">
+   *   <div class="code-block">
+   *     <div class="heading-row">
+   *       <div class="heading">heading text</div>
+   *       <div class="right">
+   *         <div class="lang-display" /><div class="copy-icon" />
+   *       </div>
+   *     </div>
+   *     <table class="lang-xxx" data-lang="xxx" v-pre>
+   *        <tr class="row line line-1 odd first-line">
+   *          <td class="line-number">...</td>
+   *          <td class="code-line">...</td>
+   *        </tr>
+   *     </table>
+   *   </div> <!-- end of .code-block -->
+   *   <div class="footer">footer text</div>
+   * </div>
    * ```
    */
 export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: CodeBlockMeta<'dom'>): DocumentFragment => {

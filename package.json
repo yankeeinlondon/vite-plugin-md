@@ -40,6 +40,7 @@
     "release": "bumpp --commit --tag --push",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "test:update": "vitest -u"
   },
   "peerDependencies": {
@@ -70,6 +71,7 @@
     "@vitest/ui": "^0.12.4",
     "@vue/test-utils": "^2.0.0-rc.21",
     "bumpp": "^7.1.1",
+    "c8": "^7.11.2",
     "callsites": "3",
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",

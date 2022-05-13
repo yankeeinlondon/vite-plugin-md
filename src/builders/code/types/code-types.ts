@@ -48,37 +48,66 @@ export interface CommonOptions {
    * By default each _line_ in the code will be given a class of "line" but you can override this
    * default behavior in one of the following ways:
    *
-   * 1. if for some reason you want to _change_ the classname you may pass in a static string value
+   * 1. if for some reason you want to _change_ the class name you may pass in a static string value
    * which will be used instead of "line".
    * 2. if you pass in a `LineCallback` function you will receive the code on that line along with the language and you can opt to _add_ additional classes (the "line" class will persist regardless of what you return)
    * 3. if you want _no classes_ then you can pass in a `false` value to indicate this
    */
   lineClass?: string | false | LineCallback
 
-  layoutStructure: 'flex-lines' | 'tabular' | 'vuepress' | 'none'
+  /**
+   * The vuepress/vitepress implementation of code blocks appears to use an interesting
+   * DOM structure to bring in line numbers that didn't feel naturally intuitive (but may
+   * have been done for very good reason). If you wish to use this structure you can configure
+   * to use the `flex-lines` style.
+   *
+   * By default we use the 'tabular' layout which feels more intuitive and has full testing
+   * behind it (in this repo).
+   *
+   * @default 'tabular'
+   */
+  layoutStructure: 'flex-lines' | 'tabular'
 
   /**
-   * Any default classes to add to the header region (when region is found to exist)
+   * Any default classes to add to the header region (when region is found to exist);
+   * if you override this be aware that some styling may expect the default "heading" class
+   * to exist.
+   *
+   * @default 'heading'
    */
   headingClasses?: string[] | BlockCallback<string[]>
+
   /**
-   * Any default classes to add to the footer region (when region is found to exist)
+   * Any default classes to add to the footer region (when region is found to exist);
+   * if you override this be aware that some styling may expect the default "footer" class
+   * to exist.
+   *
+   * @default 'footer'
    */
   footerClasses?: string[] | BlockCallback<string[]>
 
   /**
-   * Determines the default behavior for showing/hiding the line numbers in code blocks
+   * Allows to turn on/off the feature of highlighting lines in code; this is just a "default"
+   * as individual code blocks can explicitly ask for line numbers with the `#` modifier
+   *
+   * @default false
    */
   lineNumbers: boolean
 
   /**
    * Flag indicating whether to display the language name in the upper right
    * of the code block.
+   *
+   * @default true
    */
   showLanguage: boolean
 
   /**
+   * Allows to turn on/off the feature of _highlighting_ lines in code; lines will never
+   * be highlighted unless the page has instructions to highlight particular lines but
+   * this allows all highlights to be explicitly turned off
    *
+   * @default true
    */
   highlightLines: boolean
 }
@@ -133,7 +162,7 @@ export type CodeOptions = ShikiOptions | PrismOptions
 
 /**
  * Modifiers are single character tokens which are allowed
- * to preceed the "language" in a fence statement to provide
+ * to precede the "language" in a fence statement to provide
  * some binary instruction to how to handle the code block.
  */
 export enum Modifier {
@@ -144,7 +173,7 @@ export enum Modifier {
    */
   '#' = '#',
   /**
-   * using an asteriks modifier will force the line numbers
+   * using an asterisk modifier will force the line numbers
    * of a code block to NOT be used regardless of configuration
    */
   '*' = '*',

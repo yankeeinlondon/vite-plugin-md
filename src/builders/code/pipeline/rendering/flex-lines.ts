@@ -2,7 +2,7 @@ import { pipe } from 'fp-ts/lib/function'
 import type { DocumentFragment } from 'happy-wrapper'
 import { before, changeTagName, createFragment, select, wrap } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../../types'
-import type { CodeBlockMeta } from '../../types'
+import type { CodeBlockMeta, CodeOptions } from '../../types'
 import { Modifier } from '../../types'
 
 /**
@@ -12,7 +12,7 @@ import { Modifier } from '../../types'
    * 2. line numbers are displayed _after_ the code and using absolute positioning to
    * appear next to the code
    */
-export const flexLines = (p: Pipeline<PipelineStage.parser>, fence: CodeBlockMeta<'dom'>): DocumentFragment => {
+export const flexLines = (p: Pipeline<PipelineStage.parser>, o: CodeOptions, fence: CodeBlockMeta<'dom'>): DocumentFragment => {
   // determine if line numbers are to be incorporated into output
   const hasLineNumbers = o.lineNumbers || fence.modifiers.includes(Modifier['#'])
   const lineNumbersWrapper = hasLineNumbers ? fence.lineNumbersWrapper : createFragment()

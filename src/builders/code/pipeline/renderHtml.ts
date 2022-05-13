@@ -10,7 +10,7 @@ import { tabularFormatting } from './rendering/tabular'
 export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) => (fence: CodeBlockMeta<'dom'>): CodeBlockMeta<'complete'> => {
   switch (o.layoutStructure) {
     case 'flex-lines':
-      fence.codeBlockWrapper = flexLines(p, fence)
+      fence.codeBlockWrapper = flexLines(p, o, fence)
       break
     case 'tabular':
       fence.codeBlockWrapper = tabularFormatting(p, fence)

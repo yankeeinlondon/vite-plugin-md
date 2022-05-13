@@ -17,7 +17,6 @@ import {
 import type {
   CodeOptions,
 } from '../types'
-import { trace } from '../utils'
 
 import { establishHighlighter } from './establishHighlighter'
 
@@ -44,7 +43,7 @@ export const fence = async (payload: Pipeline<PipelineStage.parser>, options: Co
         useHighlighter(highlighter, options),
 
         convertBlocksToDomNodes(payload, options),
-        
+
         updateCodeBlockWrapper(payload, options),
         updateLineNumbers(options),
         highlightLines(options),

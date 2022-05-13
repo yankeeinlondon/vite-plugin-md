@@ -1,21 +1,16 @@
-import { flow, identity, pipe } from 'fp-ts/lib/function'
+import { pipe } from 'fp-ts/lib/function'
 import type { DocumentFragment, UpdateCallback_Native } from 'happy-wrapper'
 import {
   addClass,
   before,
   changeTagName,
+  clone,
   createElement,
-  describeNode,
   filterClasses,
-  getParent,
-  into,
-  prepend,
   select,
-  toHtml,
 } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../../types'
 import type { CodeBlockMeta } from '../../types'
-import { log } from '../../utils'
 
 /**
    * In tabular structure, code looks like (where `pre` tag is replaced with `table`):
@@ -32,7 +27,6 @@ import { log } from '../../utils'
 export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: CodeBlockMeta<'dom'>): DocumentFragment => {
   const toTable = changeTagName('table')
   const toTD = changeTagName('td')
-  const toTH = changeTagName('th')
   let misplaced: string[] = []
   const removed = (classes: string[]) => {
     misplaced = classes
@@ -44,18 +38,18 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
     fence.pre,
     select,
     s => s.update()(toTable),
-    s => s.update()(
-      // if there's a "heading" then it will be the first row of the table
-      fence.heading
-        ? prepend(toTH(fence.heading.firstElementChild))
-        : identity,
-    ),
     s => s.updateAll('.code-line')(toTD),
     s => s.updateAll('.code-line')(el =>
       pipe(
         el,
         filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row'),
-        into(pipe('<tr class="code-row">', createElement, addClass(misplaced))),
+        (el) => {
+          const tr = pipe('<tr class="code-row">', createElement, addClass(misplaced))
+          tr.append(clone(el))
+          el.replaceWith(tr)
+          return el
+        },
+        // into(pipe('<tr class="code-row">', createElement, addClass(misplaced))),
       ),
     ),
     s => s.updateAll('.code-line')(lineNumberElement),
@@ -68,7 +62,13 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
     s => s.update(
       '.code-block',
       `Couldn't find the ".code-block" node in the file ${p.fileName}`,
-    )(into(fence.pre)),
+    )((el) => {
+      // if (el.firstElementChild)
+      //   el.firstElementChild.append(fence.pre)
+      // else
+      el.appendChild(fence.pre)
+      return el
+    }),
     s => s.toContainer(),
   )
 

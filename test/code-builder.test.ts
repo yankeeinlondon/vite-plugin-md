@@ -302,7 +302,7 @@ describe('code() builder using Shiki', () => {
   })
 })
 
-describe.only('table format for code blocks', () => {
+describe('table format for code blocks', () => {
   it('a code block can be converted to use a tabular HTML output', async () => {
     const { html } = await composeFixture('ts-code-block', {
       builders: [code({
@@ -325,5 +325,36 @@ describe.only('table format for code blocks', () => {
     // rows in table have same length too
     const rows = sel.findAll('tr')
     expect(rows.length).toBe(lineNumLines.length)
+    // meta-classes from code lines have been transferred to row level
+    // from the code-line elements
+    codeLines.forEach((cl) => {
+      const classes = getClassList(cl)
+      expect(classes).not.toContain('even')
+      expect(classes).not.toContain('odd')
+      expect(classes.find(i => i.startsWith('line-'))).toBeFalsy()
+    })
+    expect(getClassList(rows[0])).toContain('odd')
+    expect(getClassList(rows[0])).toContain('first-row')
+    rows.forEach((r) => {
+      const classes = getClassList(r)
+      expect(classes.find(i => i.startsWith('line-'))).toBeTruthy()
+    })
+
+    // in this markdown we DO NOT have a heading section or footer
+    expect(sel.findFirst('.heading')).toBeFalsy()
+    expect(sel.findFirst('.footer')).toBeFalsy()
+  })
+
+  it('when tabular section is used along with heading and footer sections, this is visible too', async () => {
+    const { html } = await composeFixture('ts-code-block-head-foot', {
+      builders: [code({
+        lineNumbers: true,
+        layoutStructure: 'tabular',
+      })],
+    })
+
+    const sel = select(html)
+    expect(sel.findFirst('.heading')).toBeTruthy()
+    expect(sel.findFirst('.footer')).toBeTruthy()
   })
 })

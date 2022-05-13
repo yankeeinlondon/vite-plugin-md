@@ -90,12 +90,11 @@ export const createElement = (el: Container | HTML, parent?: IElement): IElement
       throw new HappyMishap('An IElement can not be created from a IText node because element\'s require a wrapping tag name!', { name: 'createElement(text)', inspect: t })
     },
     fragment: (f) => {
-      if(isElement(f.firstElementChild)) {
-          return f.firstElementChild as IElement
-        }
-        else {
-          throw new HappyMishap(`Unable to create a IElement node from: \n\n${toHtml(f)}`, {name: 'createElement()'})
-        }
+      if (isElement(f.firstElementChild))
+        return f.firstElementChild as IElement
+
+      else
+        throw new HappyMishap(`Unable to create a IElement node from: \n\n${toHtml(f)}`, { name: 'createElement()' })
     },
     document: (d) => {
       if (isElementLike(d)) {

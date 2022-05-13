@@ -100,7 +100,7 @@ export interface CommonOptions {
    *
    * @default true
    */
-  showLanguage: boolean
+  showLanguage: boolean | BlockCallback<boolean>
 
   /**
    * Allows to turn on/off the feature of _highlighting_ lines in code; lines will never
@@ -109,7 +109,14 @@ export interface CommonOptions {
    *
    * @default true
    */
-  highlightLines: boolean
+  highlightLines: boolean | BlockCallback<boolean>
+
+  /**
+   * Add a `<span>` element to the heading row which copies the code to the clipboard
+   *
+   * @default false
+   */
+  clipboard: boolean | BlockCallback<boolean>
 }
 
 export interface PrismOptions extends CommonOptions {

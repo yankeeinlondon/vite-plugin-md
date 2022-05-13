@@ -79,6 +79,33 @@ export const replaceElement = (newElement: IElement | HTML) => (oldElement: IEle
 }
 
 /**
+ * Appends one or more nodes to a parent container
+ */
+export const append = <N extends ContainerOrHtml[]>(...nodes: N | N[]) => {
+  const n = nodes.flat()
+  return <P extends UpdateSignature | ContainerOrHtml>(parent: P): P extends Array<any> ? IElement : P => {
+    const result = solveForNodeType('text', 'node').mirror().solver({
+      html: h => pipe(h, createElement, append(...nodes), toHtml),
+      element: (e) => {
+        n.forEach(i => e.append(i))
+        return e
+      },
+      fragment: (f) => {
+        n.forEach(i => f.append(i))
+        return f
+      },
+      document: (d) => {
+        n.forEach(i => d.body.append(i))
+        return d
+      },
+
+    })(isUpdateSignature(parent) ? parent[0] : parent)
+
+    return result as P extends Array<any> ? IElement : P
+  }
+}
+
+/**
  * A _partially applied_ instance of the `into()` utility; currently waiting
  * for child/children nodes.
  *

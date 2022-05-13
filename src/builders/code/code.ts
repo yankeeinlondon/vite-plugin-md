@@ -33,6 +33,10 @@ export const code = createBuilder('code', PipelineStage.parser)
       highlightLines: true,
       lineNumbers: false,
       showLanguage: true,
+      clipboard: false,
+      lineClass: 'code-line',
+      headingClasses: ['heading'],
+      footerClasses: ['footer'],
       layoutStructure: 'flex-lines',
       ...(o.engine === Highlighter.shiki
         ? SHIKI_DEFAULTS

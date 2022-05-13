@@ -341,6 +341,7 @@ describe('table format for code blocks', () => {
     })
 
     // in this markdown we DO NOT have a heading section or footer
+    expect(sel.findFirst('.heading-row')).toBeTruthy() // but do have heading row
     expect(sel.findFirst('.heading')).toBeFalsy()
     expect(sel.findFirst('.footer')).toBeFalsy()
   })
@@ -353,8 +354,26 @@ describe('table format for code blocks', () => {
       })],
     })
 
-    const sel = select(html)
-    expect(sel.findFirst('.heading')).toBeTruthy()
-    expect(sel.findFirst('.footer')).toBeTruthy()
+    console.log(html)
+
+    const body = select(html)
+    const headingRow = body.findFirst('.heading-row', 'couldn\'t find .heading-row!')
+    const codeWrapper = body.findFirst('.code-wrapper', 'couldn\'t find .code-wrapper!')
+    const codeBlock = body.findFirst('.code-block', 'couldn\'t find .code-block!')
+
+    expect(headingRow).toBeTruthy()
+    expect(getClassList(headingRow)).toContain('with-heading')
+    expect(
+      body.findFirst('.heading'),
+      '.heading exists on page',
+    ).toBeTruthy()
+    expect(
+      select(headingRow).findFirst('.heading'),
+      'heading is within heading-row',
+    ).toBeTruthy()
+    // footer exists and is wrapped by .code-wrapper but not .code-block
+    expect(body.findFirst('.footer')).toBeTruthy()
+    expect(select(codeWrapper).findFirst('.footer')).toBeTruthy()
+    expect(select(codeBlock).findFirst('.footer')).toBeFalsy()
   })
 })

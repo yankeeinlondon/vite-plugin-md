@@ -59,7 +59,6 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
           el.replaceWith(tr)
           return el
         },
-        // into(pipe('<tr class="code-row">', createElement, addClass(misplaced))),
       ),
     ),
     s => s.updateAll('.code-line')(lineNumberElement),
@@ -73,9 +72,6 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
       '.code-block',
       `Couldn't find the ".code-block" node in the file ${p.fileName}`,
     )((el) => {
-      // if (el.firstElementChild)
-      //   el.firstElementChild.append(fence.pre)
-      // else
       el.appendChild(fence.pre)
       return el
     }),

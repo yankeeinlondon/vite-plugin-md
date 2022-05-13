@@ -126,7 +126,7 @@ export type UpdateCallback_Native = (el: IElement, idx: number, total: number) =
  * In all cases, the function _must_ return either an `IElement` node _or_ a `false` value
  * where _false_ indicates that the given node should be removed.
  */
-export type UpdateCallback<C extends Container | HTML | UpdateSignature | ContainerOrHtml[]> = (args: C) => ToElement<C> | false
+export type UpdateCallback<C extends Container | HTML | UpdateSignature | ContainerOrHtml[]> = (...args: C[]) => ToElement<C> | false
 
 export type MapCallback<I, O> = (input: I) => O
 
@@ -193,7 +193,7 @@ export interface NodeSelector<T extends Container | 'html'> {
    * Allows the injection of a callback which will be used to mutate on the first `IElement` node
    * which matches the first
    */
-  update: <E extends string | undefined>(sel: string, errorMsg?: E) => <CB extends UpdateCallback<any>>(cb: CB) => NodeSelector<T>
+  update: <E extends string | undefined>(sel?: string, errorMsg?: E) => <CB extends UpdateCallback<any>>(cb: CB) => NodeSelector<T>
   /**
    * Provides a way to inject an update callback which will be applied to all IElement nodes
    * which meet the selector query. If no query is provided, then this will be all `IElement`

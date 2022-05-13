@@ -5,6 +5,7 @@ import { createDocument, createElement, createFragment, createNode } from './cre
 import type { Container, ContainerOrHtml, DocRoot, HTML, UpdateSignature } from './happy-types'
 import { isDocument, isElement, isElementLike, isFragment, isTextNode, isTextNodeLike, isUpdateSignature } from './type-guards'
 import { clone, getNodeType, solveForNodeType, toHtml } from './utils'
+import { inspect } from './diagnostics'
 
 /**
  * converts a IHTMLCollection or a INodeList to an array
@@ -261,6 +262,9 @@ export const prepend = (prepend: IElement | IText | HTML) => (el: IElement): IEl
   return el
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type Before<_T extends ContainerOrHtml> = <A extends ContainerOrHtml | UpdateSignature>(...afterNode: A[]) => A extends UpdateSignature ? IElement: A extends string ? string :A
+
 /**
  * Inserts a set of Node or string objects in the children list of this Element's
  * parent, just before this Element. String objects are inserted as equivalent Text nodes.
@@ -271,27 +275,45 @@ export const prepend = (prepend: IElement | IText | HTML) => (el: IElement): IEl
  * const message: IElement = startWith(body)
  * ```
  */
-export const before = (
-  beforeNode: DocumentFragment | IElement | IText | HTML,
-) => <A extends IElement | DocumentFragment | HTML>(
-  afterNode: A,
-): A => {
-  const beforeNormalized = typeof beforeNode === 'string'
-    ? createFragment(beforeNode).firstElementChild
-    : beforeNode
+export const before = <B extends ContainerOrHtml>(
+  beforeNode: B,
+): Before<B> => <A extends ContainerOrHtml | UpdateSignature>(
+    ...afterNode: A[]
+  ): A extends UpdateSignature ? IElement: A extends string ? string : A => {
+  const outputIsHtml = (typeof afterNode[0] === 'string')
+  const beforeNormalized: IElement | IText = typeof beforeNode === 'string'
+    ? (createFragment(beforeNode).firstElementChild || createFragment(beforeNode).firstChild) as IElement | IText
+    : createNode(beforeNode)
+
+  const afterNormalized: ContainerOrHtml = typeof afterNode[0] === 'string'
+    ? createFragment(afterNode[0])
+    : isUpdateSignature(afterNode[0])
+      ? afterNode[0][0]
+      : afterNode[0]
 
   const invalidType = (n: string | Container) => {
     throw new HappyMishap(
-    `The before function was passed an invalid container type: ${getNodeType(n)}`,
-    { name: `before(${getNodeType(beforeNode)})(invalid)` },
+    `The before() utility was passed an invalid container type for the "after" node: ${getNodeType(n)}`,
+    { name: `before(${getNodeType(beforeNormalized)})(${getNodeType(n)})`, inspect: n },
     )
   }
 
-  return solveForNodeType()
+  const noParent = (n: string | Container) =>
+    new HappyMishap(
+      'the before() utility for depends on having a parent element in the "afterNode" as the parent\'s value must be mutated. If you do genuinely want this behavior then use a DocumentFragment (or just HTML strings)',
+      { name: `before(${getNodeType(beforeNode)})(${getNodeType(n)})` },
+    )
+
+  const node = solveForNodeType()
     .mirror()
     .solver({
       html: h => pipe(h, createFragment, before(beforeNode), toHtml),
-      text: t => invalidType(t),
+      text: (t) => {
+        if (!t.parentElement)
+          throw noParent(t)
+        t.before(beforeNormalized)
+        return t
+      },
       node: n => invalidType(n),
       document: (d) => {
         d.body.prepend(beforeNormalized)
@@ -308,14 +330,13 @@ export const before = (
 
           return el
         }
-        else {
-          throw new HappyMishap(
-            'the before() utility for depends on having a parent element in the "afterNode" as the parent\'s value must be mutated. If you do genuinely want this behavior then use a DocumentFragment (or just HTML strings)',
-            { name: `before(${getNodeType(beforeNode)})(IElement)` },
-          )
-        }
+        else { throw noParent(el) }
       },
-    })(afterNode)
+    })(afterNormalized)
+
+  return (outputIsHtml && !isUpdateSignature(afterNode)
+    ? toHtml(node)
+    : node) as A extends UpdateSignature ? IElement: A extends string ? string :A
 }
 
 export const after = (

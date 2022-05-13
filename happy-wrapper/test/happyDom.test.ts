@@ -1,5 +1,6 @@
 import { pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
+import type { IElement, UpdateCallback_Native } from '../src'
 import {
   addClass,
   after,
@@ -19,6 +20,7 @@ import {
   into,
   isElementLike,
   isHappyWrapperError,
+  isUpdateSignature,
   nodeBoundedByElements,
   nodeChildrenAllElements,
   prepend,
@@ -172,6 +174,23 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(toHtml(node)).toBe('<div class="parent"><div class="child">hello world</div></div>')
   })
 
+  it('changeTag() works with select().update()', () => {
+    const html = '<div><span class="inside">inside</span></div>'
+    const toTable = changeTagName('table')
+    const converted = select(html).update()(toTable).toContainer()
+    expect(converted).toBe('<table><span class="inside">inside</span></table>')
+
+    const toTR = changeTagName('tr')
+    const converted2 = pipe(
+      html,
+      select,
+      s => s.update()(toTable),
+      s => s.updateAll('span')(toTR),
+      s => s.toContainer(),
+    )
+    expect(converted2).toBe('<table><tr class="inside">inside</tr></table>')
+  })
+
   it('replaceElement() replaces an element while preserving parental relationship', () => {
     const html = '<div class="parent"><span class="child">hello world</span></div>'
     const onlySpan = html.replace(/div/g, 'span')
@@ -287,7 +306,8 @@ describe('HappyDom\'s can be idempotent', () => {
     const three = '<span class="item three">three</span>'
     const wrappedOneTwo = into(wrap)(one, two)
     // basic test with HTML
-    const t1 = before(two)(one)
+    const beforeTwo = before(two)
+    const t1 = beforeTwo(one)
     expect(t1).toBe(`${two}${one}`)
     // a fragment should work the same
     const One = createFragment(one)
@@ -328,6 +348,30 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(items[0].textContent).toContain('one')
     expect(items[1].textContent).toContain('three')
     expect(items[2].textContent).toContain('two')
+  })
+
+  it('before() works in concert with select().updateAll()', () => {
+    const html = '<div><span>one</span><span>two</span></div>'
+    const injectBefore = before('<p>before</p>')
+    const transformed = pipe(
+      html,
+      select,
+      s => s.updateAll('span')(injectBefore),
+      s => s.toContainer(),
+    )
+
+    expect(transformed).toBe('<div><p>before</p><span>one</span><p>before</p><span>two</span></div>')
+
+    const injectWithIndex = (el: IElement, idx: number) => before(`<p>before ${idx}</p>`)(el)
+
+    const transformed2 = pipe(
+      html,
+      select,
+      s => s.updateAll('span')(injectWithIndex),
+      s => s.toContainer(),
+    )
+
+    expect(transformed2).toBe('<div><p>before 0</p><span>one</span><p>before 1</p><span>two</span></div>')
   })
 
   it('after() works as expected', () => {
@@ -426,11 +470,6 @@ describe('HappyDom\'s can be idempotent', () => {
   })
 
   it('wrap() using with updateAll() utility is able to mutate tree correctly', () => {
-    // NOTE: the issue we're testing for is that the selector passed to updateAll()
-    // is an IElement which _should_ have a parent element that contains it. When
-    // when we call into() we are changing the hierarchy so that the parent of the incoming
-    // element must now point to the _new_ parent node and this parent node in turn will
-    // point to the incoming node
     const html = '<div class="container"><span class="one item">one</span><span class="two item">two</span></div>'
     const wrapEach = '<span class="wrap-each"></span>'
     const expectedOutcome = '<div class="container"><span class="one item">one<span class="wrap-each"></span></span><span class="two item">two<span class="wrap-each"></span></span></div>'

@@ -1,9 +1,9 @@
-import { flow, identity, pipe } from 'fp-ts/lib/function'
-import type { IElement } from 'happy-wrapper'
-import { addClass, before, changeTagName, clone, createElement, createFragment, describeNode, filterClasses, getClassList, inspect, into, prepend, select, toHtml, wrap } from 'happy-wrapper'
+import { pipe } from 'fp-ts/lib/function'
+import { before, changeTagName, createFragment, select, toHtml, wrap } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../types'
 import type { CodeBlockMeta, CodeOptions } from '../types'
 import { Modifier } from '../types'
+import { tabularFormatting } from './rendering/tabular'
 
 /**
  * Renders the HTML which results from the code block transform pipeline
@@ -43,84 +43,12 @@ export const renderHtml = (p: Pipeline<PipelineStage.parser>, o: CodeOptions) =>
     s => s.toContainer(),
   )
 
-  /**
-   * In tabular structure, code looks like (where `pre` tag is replaced with `table`):
-   * ```html
-   * <table class="lang-xxx" data-lang="xxx">
-   *    <tr class="heading"><th>heading</th></tr>
-   *    <tr class="row line line-1 odd first-line">
-   *      <td class="line-number">...</td>
-   *      <td class="code-line">...</td>
-   *    </tr>
-   * </table>
-   * ```
-   */
-  const tabularFormatting = () => {
-    const toTable = changeTagName('table')
-    const toTD = changeTagName('td')
-    const toTH = changeTagName('th')
-    const codeLine = (el: IElement) => getClassList(el).filter(i => i.startsWith('line-')).join(' ')
-    const highlight = (el: IElement) => getClassList(el).includes('highlight') ? ['highlight'] : []
-
-    const table = select(fence.pre)
-      .update()(toTable)
-      .update()(
-        // if there's a "heading" then it will be the first row of the table
-        fence.heading
-          ? prepend(toTH(fence.heading.firstElementChild))
-          : identity,
-      )
-      .updateAll('.code-line')((el) => {
-        let misplaced: string[] = []
-        const removed = (classes: string[]) => {
-          misplaced = classes
-        }
-
-        const el2 = pipe(
-          el,
-          toTD,
-          filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row'),
-          into(
-            pipe('<tr class="code-row">', createElement, addClass(misplaced)),
-          ),
-          // (el) => {
-          //   const klasses = [codeLine(el), highlight(el), misplaced].flat()
-
-          //   const tr = pipe('<tr class="code-row"></tr>', createElement, addClass(klasses))
-          //   const lineNumber = createElement(`<td class="line-number">${codeLine(el).replace('line-', '')}</td>`)
-          //   const row = wrap(lineNumber, clone(el))(tr)
-
-          //   el.replaceWith(row)
-          //   return el
-          // },
-        )
-
-        console.log('TR', pipe('<tr class="code-row"></tr>', createElement, addClass(misplaced), toHtml))
-
-        console.log('DISCARD\n', misplaced)
-        console.log('EL\n', toHtml(el2))
-        console.log('PARENT\n', toHtml(el2.parentNode))
-
-        return el
-      })
-      .toContainer()
-
-    const codeBlockWrapper = select(fence.codeBlockWrapper)
-      .update(
-        '.code-block',
-        `Couldn't find the ".code-block" in the file ${p.fileName}`,
-      )(codeBlock => into(codeBlock)([table]))
-      .toContainer()
-
-    return codeBlockWrapper
-  }
-
   switch (o.layoutStructure) {
     case 'flex-lines':
       fence.codeBlockWrapper = flexLines()
       break
     case 'tabular':
-      fence.codeBlockWrapper = tabularFormatting()
+      fence.codeBlockWrapper = tabularFormatting(p, fence)
       break
   }
 

@@ -4,7 +4,7 @@ import { describeNode, inspect } from './diagnostics'
 import { HappyMishap } from './errors'
 import type { HTML, MapCallback, NodeSelector, UpdateCallback, UpdateCallback_Native } from './happy-types'
 import { getChildElements } from './nodes'
-import { isDocument, isElement, isFragment, isTextNode } from './type-guards'
+import { isDocument, isElement, isElementLike, isFragment } from './type-guards'
 import { clone, getNodeType, toHtml } from './utils'
 
 /**
@@ -63,24 +63,31 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
      * you want to state the error message.
      */
     update: (
-      selection: string,
+      selection?: string,
       errorIfNotFound: boolean | string = false,
     ) => <CB extends UpdateCallback<any>>(
       mutate: CB,
     ): NodeSelector<T> => {
-      const el = rootNode.querySelector(selection) as IElement | null
-
-      if (!selection && el === null)
-        throw new HappyMishap('Performing an update on a root selection which is a Text node is not allowed!', { name: 'update()' })
-      if ((isDocument(rootNode) || isFragment(rootNode)) && (rootNode.firstElementChild !== rootNode.lastElementChild))
-        throw new HappyMishap('Performing an update on a document or fragment which has more than a single element as a child is not expected! Try either updateAll() or use a DOM selection query!', { name: 'update()' })
+      const el = selection
+        ? rootNode?.querySelector(selection) as IElement | null
+        : isElement(rootNode)
+          ? rootNode
+          : rootNode.firstElementChild
+            ? rootNode.firstElementChild
+            : null
 
       if (el) {
-        const results = (mutate as UpdateCallback_Native)(el, 0, 1)
+        let elReplacement: IElement | false
+        try {
+          elReplacement = (mutate as UpdateCallback_Native)(el, 0, 1)
+        }
+        catch (e) {
+          throw new HappyMishap(`update(): the passed in callback to select(container).update('${selection}')():  \n\n\tmutate(${describeNode(el)}, 0, 1)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })
+        }
 
-        if (results === false)
+        if (elReplacement === false)
           el.remove()
-        else if (!isElement(results))
+        else if (!isElement(elReplacement))
           throw new HappyMishap(`The return value for a call to select(${getNodeType(rootNode)}).update(${selection}) return an invalid value! Value return values are an IElement or false.`, { name: 'select.update', inspect: el })
       }
       else {
@@ -93,6 +100,9 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
             inspect: ['parent node', rootNode],
           })
         }
+
+        if (!selection)
+          throw new HappyMishap(`Call to select(container).update() was intended to target the root node of the selection but nothing was selected! This shouldn\'t really happen ... the rootNode\'s type is ${typeof rootNode}${typeof rootNode === 'object' ? `, ${getNodeType(rootNode)} [element-like: ${isElementLike(rootNode)}, element: ${isElement(rootNode)}, children: ${rootNode.childNodes.length}]` : ''}`)
       }
 
       return api
@@ -136,7 +146,6 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
           else if (!isElement(elReplacement))
             throw new HappyMishap(`The return value from the "select(container).updateAll('${selection}')(${describeNode(el)}, ${idx} idx, ${elements.length} elements)" call was invalid! Valid return values are FALSE or an IElement but instead got: ${typeof elReplacement}.`, { name: 'select().updateAll -> invalid return value' })
         }
-
         else {
           throw new Error(`Ran into an unknown node type while running updateAll(): ${JSON.stringify(inspect(el), null, 2)}`)
         }
@@ -174,7 +183,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
      * receive elements which were filtered out
      */
     filterAll: <S extends string>(selection: S, cb?: ((removed: IElement) => void)) => {
-      rootNode.querySelectorAll(selection).forEach((el) => {
+      rootNode?.querySelectorAll(selection).forEach((el) => {
         if (cb)
           cb(el)
         el.remove()

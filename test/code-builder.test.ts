@@ -302,7 +302,7 @@ describe('code() builder using Shiki', () => {
   })
 })
 
-describe('table format for code blocks', () => {
+describe.only('table format for code blocks', () => {
   it('a code block can be converted to use a tabular HTML output', async () => {
     const { html } = await composeFixture('ts-code-block', {
       builders: [code({
@@ -312,10 +312,16 @@ describe('table format for code blocks', () => {
     })
 
     const sel = select(html)
-    const codeLines = sel.findAll('.code-line')
-    const lineNumLines = sel.findAll('.line-number')
 
+    // table exists
+    const table = sel.findFirst('table')
+    expect(table).toBeTruthy()
+
+    // code lines converted to TD node
+    const codeLines = sel.findAll('.code-line')
     codeLines.forEach(l => expect(l.tagName).toBe('TD'))
+
+    const lineNumLines = sel.findAll('.line-number')
 
     // eslint-disable-next-line no-console
     console.log({ codeLines: codeLines.length, lineNumLines: lineNumLines.length, html })

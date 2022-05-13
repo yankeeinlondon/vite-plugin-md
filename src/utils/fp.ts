@@ -1,6 +1,9 @@
+import { relative } from 'path'
 import * as E from 'fp-ts/lib/Either'
 import * as TE from 'fp-ts/lib/TaskEither'
 import { pipe } from 'fp-ts/lib/function'
+import callsites from 'callsites'
+import type { CallSite } from 'callsites'
 
 import type { IPipelineStage, PipeEither, PipeTask, Pipeline, PipelineStage } from '../types'
 
@@ -12,7 +15,7 @@ import type { IPipelineStage, PipeEither, PipeTask, Pipeline, PipelineStage } fr
  *
  * To be lifted up to becoming a Task:
  * ```ts
- * dclare function task = (P: PipeTask<F>) => PipeTask<T>
+ * declare function task = (P: PipeTask<F>) => PipeTask<T>
  * ```
  */
 export const transformer = <F extends IPipelineStage, T extends IPipelineStage>(
@@ -24,8 +27,13 @@ export const transformer = <F extends IPipelineStage, T extends IPipelineStage>(
     payload,
     TE.map(
       p => TE.tryCatch(
-        () => Promise.resolve(fn(p)),
-        e => `There was a problem using "${name}" to transform the pipeline: ${e instanceof Error ? e.message : String(e)}`,
+        () => {
+          const result = Promise.resolve(fn(p))
+          return result
+        },
+        (e) => {
+          return `There was a problem during the "${name}" stage in the transform pipeline:\n\n  ${e instanceof Error ? `${e.message}\n\n${e.stack}` : String(e)}`
+        },
       ),
     ),
     TE.flatten,

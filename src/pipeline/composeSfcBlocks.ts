@@ -24,6 +24,7 @@ import {
   wrapHtml,
 } from '../pipeline'
 import { lift } from '../utils'
+import { MdError } from '../MdError'
 
 /**
  * Composes the `template` and `script` blocks, along with any other `customBlocks` from
@@ -105,5 +106,5 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
   if (isRight(result))
     return result.right
   else
-    throw new Error(result.left)
+    throw new MdError(result.left)
 }

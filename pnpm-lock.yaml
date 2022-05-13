@@ -18,6 +18,7 @@ importers:
       '@vue/runtime-core': ^3.2.33
       '@vue/test-utils': ^2.0.0-rc.21
       bumpp: ^7.1.1
+      callsites: '3'
       eslint: ^8.15.0
       eslint-config-prettier: ^8.5.0
       fp-ts: ^2.12.1
@@ -61,6 +62,7 @@ importers:
       '@vitest/ui': 0.12.4
       '@vue/test-utils': 2.0.0-rc.21_vue@3.2.33
       bumpp: 7.1.1
+      callsites: 3.1.0
       eslint: 8.15.0
       eslint-config-prettier: 8.5.0_eslint@8.15.0
       rollup: 2.72.1

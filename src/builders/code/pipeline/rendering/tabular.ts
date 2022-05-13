@@ -1,12 +1,13 @@
 import { flow, identity, pipe } from 'fp-ts/lib/function'
-import type { DocumentFragment, IElement, UpdateCallback, UpdateCallback_Native, UpdateSignature } from 'happy-wrapper'
+import type { DocumentFragment, UpdateCallback_Native } from 'happy-wrapper'
 import {
-  addClass, after,
+  addClass,
   before,
-
   changeTagName,
   createElement,
+  describeNode,
   filterClasses,
+  getParent,
   into,
   prepend,
   select,
@@ -14,6 +15,7 @@ import {
 } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../../types'
 import type { CodeBlockMeta } from '../../types'
+import { log } from '../../utils'
 
 /**
    * In tabular structure, code looks like (where `pre` tag is replaced with `table`):
@@ -48,9 +50,10 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
         ? prepend(toTH(fence.heading.firstElementChild))
         : identity,
     ),
-    s => s.updateAll('.code-line')(
-      flow(
-        toTD,
+    s => s.updateAll('.code-line')(toTD),
+    s => s.updateAll('.code-line')(el =>
+      pipe(
+        el,
         filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row'),
         into(pipe('<tr class="code-row">', createElement, addClass(misplaced))),
       ),

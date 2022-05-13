@@ -316,14 +316,14 @@ describe.only('table format for code blocks', () => {
     // table exists
     const table = sel.findFirst('table')
     expect(table).toBeTruthy()
-
     // code lines converted to TD node
     const codeLines = sel.findAll('.code-line')
     codeLines.forEach(l => expect(l.tagName).toBe('TD'))
-
+    // code line cols equal in number to code lines
     const lineNumLines = sel.findAll('.line-number')
-
-    // eslint-disable-next-line no-console
-    console.log({ codeLines: codeLines.length, lineNumLines: lineNumLines.length, html })
+    expect(lineNumLines.length).toBe(codeLines.length)
+    // rows in table have same length too
+    const rows = sel.findAll('tr')
+    expect(rows.length).toBe(lineNumLines.length)
   })
 })

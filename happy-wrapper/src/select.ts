@@ -65,7 +65,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
     update: (
       selection?: string,
       errorIfNotFound: boolean | string = false,
-    ) => <CB extends UpdateCallback<any>>(
+    ) => <CB extends UpdateCallback>(
       mutate: CB,
     ): NodeSelector<T> => {
       const el = selection
@@ -79,7 +79,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
       if (el) {
         let elReplacement: IElement | false
         try {
-          elReplacement = (mutate as UpdateCallback_Native)(el, 0, 1)
+          elReplacement = (mutate as unknown as UpdateCallback_Native)(el, 0, 1)
         }
         catch (e) {
           throw new HappyMishap(`update(): the passed in callback to select(container).update('${selection}')():  \n\n\tmutate(${describeNode(el)}, 0, 1)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })
@@ -118,7 +118,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
      */
     updateAll: <S extends string | undefined>(
       selection?: S,
-    ) => <CB extends UpdateCallback<any>>(
+    ) => <CB extends UpdateCallback>(
       mutate: CB,
     ): NodeSelector<T> => {
       /**
@@ -134,7 +134,7 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
         if (isElement(el)) {
           let elReplacement: IElement | false
           try {
-            elReplacement = (mutate as UpdateCallback_Native)(el, idx, elements.length)
+            elReplacement = (mutate as unknown as UpdateCallback_Native)(el, idx, elements.length)
           }
           catch (e) {
             throw new HappyMishap(`updateAll(): the passed in callback to select(container).updateAll('${selection}')():  \n\n\tmutate(${describeNode(el)}, ${idx} idx, ${elements.length} elements)\n\n${e instanceof Error ? e.message : String(e)}.`, { name: `select(${typeof rootNode}).updateAll(${selection})(mutation fn)`, inspect: el })

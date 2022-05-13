@@ -1,6 +1,6 @@
 import { pipe } from 'fp-ts/lib/function'
 import { describe, expect, it } from 'vitest'
-import type { IElement, UpdateCallback_Native } from '../src'
+import type { IElement } from '../src'
 import {
   addClass,
   after,
@@ -11,19 +11,17 @@ import {
   createElement,
   createFragment,
   createTextNode,
-  describeNode as desc,
   filterClasses,
   getChildren,
   getClassList,
   getNodeType,
+  hasParentElement,
   inspect,
   into,
   isElementLike,
   isHappyWrapperError,
-  isUpdateSignature,
   nodeBoundedByElements,
   nodeChildrenAllElements,
-  prepend,
   removeClass,
   replaceElement,
   safeString,
@@ -234,8 +232,9 @@ describe('HappyDom\'s can be idempotent', () => {
       <span class='line line-3'>3</span>
     </div>
     `
+    const toDiv = changeTagName('div')
     const updated = select(html)
-      .updateAll('.line')(changeTagName('div'))
+      .updateAll('.line')(toDiv)
       .toContainer()
     const found = select(updated).findAll('.line')
 
@@ -430,7 +429,7 @@ describe('HappyDom\'s can be idempotent', () => {
     // when we call into() we are changing the hierarchy so that the parent of the incoming
     // element must now point to the _new_ parent node and this parent node in turn will
     // point to the incoming node
-    const html = '<div class="container"><span class="one item">one</span><span class="two item">two</span></div>'
+    const html = createElement('<div class="container"><span class="one item">one</span><span class="two item">two</span></div>')
     const wrapEach = '<span class="wrap-each"></span>'
     const expectedOutcome = '<div class="container"><span class="wrap-each"><span class="one item">one</span></span><span class="wrap-each"><span class="two item">two</span></span></div>'
     const sel = select(html)
@@ -438,7 +437,9 @@ describe('HappyDom\'s can be idempotent', () => {
     const result = sel
       .updateAll('.item')(wrapper)
       .toContainer()
-    expect(result).toBe(expectedOutcome)
+    expect(toHtml(result)).toBe(expectedOutcome)
+    expect(toHtml(html)).toBe(expectedOutcome)
+    select(html).findAll('.item').forEach(i => expect(hasParentElement(i)).toBeTruthy())
   })
 
   it('wrap() works as expected', () => {

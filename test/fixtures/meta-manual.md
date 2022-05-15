@@ -1,10 +1,11 @@
 ---
-title: Metadata Rules
+title: Route on Page effects Meta
 name: My Name
 byline: who loves ya baby?
-layout: yowza
 image: facebook.png
 ---
+
+<route>{"meta":{"layout":"yowza"}}</route>
 
 # Metadata
 

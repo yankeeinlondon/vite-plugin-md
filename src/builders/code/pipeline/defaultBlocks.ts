@@ -1,7 +1,7 @@
 import { identity, pipe } from 'fp-ts/lib/function'
 import { addClass, append } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../types'
-import type { BlockCallback, CodeBlockMeta, CodeOptions } from '../types'
+import type { BlockCallback, CodeBlockMeta, CodeOptions } from '../code-types'
 
 /**
  * provides initial defaults for the `pre`, `codeBlockWrapper`, and `lineNumbersWrapper`

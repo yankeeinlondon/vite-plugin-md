@@ -75,12 +75,7 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
       (acc, [key, value]) => `${acc}\n${isVue2(options) ? 'export' : ''} const ${key} = ${JSON.stringify(value)}`,
       '',
     ),
-    /**
-     * Adds a route section (aka, custom block) in the component if needed
-     */
-    routeMeta: Object.keys(routeMeta || {}).length > 0
-      ? `<route>{ meta: { ${JSON.stringify(routeMeta)} } }</route>\n`
-      : '',
+
   }
 
   const regularScriptBlocks = hoistScripts.scripts.map(
@@ -126,8 +121,8 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
         regularScriptBlocks,
       ].filter(i => i).join('\n')
 
-  if (templateBlocks.routeMeta)
-    customBlocks.push(templateBlocks.routeMeta)
+  if (routeMeta)
+    customBlocks.push(`<route lang="json">${JSON.stringify(routeMeta)}</route>\n`)
 
   return {
     ...payload,

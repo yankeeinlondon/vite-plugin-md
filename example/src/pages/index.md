@@ -13,7 +13,12 @@ meta:
 
 ## Installation
 
-fill in
+The installation of `vite-plugin-md` is quite simple once you've setup ViteJS:
+
+```sh
+// use your favorite package manager
+npm i -D vite-plugin-md
+```
 
 ## Usage
 
@@ -31,9 +36,17 @@ The frontmatter for this page is:
 
 > Note: while it is represented here as a JSON structure, in the markdown you would add in YAML syntax.
 
+## Builders
+
+The base functionality of this plugin may be all you need or maybe your comfortable with using **markdown it** plugins to extend the base functionality for your needs ... but for those who want to reach into some useful "power ups" you can use a builder to add functionality in powerful ways:
+
+- [Meta](./meta-builder)
+- [Link](./link-builder)
+- [Meta](./meta-builder)
+
 ## VueJS Components
 
-You can embed VueJS components into your markdown whereever you like:
+You can embed VueJS components into your markdown where ever you like:
 
 <Counter />
 

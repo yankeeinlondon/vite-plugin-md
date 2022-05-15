@@ -2,8 +2,8 @@ import { pipe } from 'fp-ts/lib/function'
 import type { DocumentFragment } from 'happy-wrapper'
 import { before, changeTagName, createFragment, select, wrap } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../../types'
-import type { CodeBlockMeta, CodeOptions } from '../../types'
-import { Modifier } from '../../types'
+import type { CodeBlockMeta, CodeOptions } from '../../code-types'
+import { Modifier } from '../../code-types'
 
 /**
    * in 'flex-lines' layout we'll use a strategy similar to what is used in Vite/Vuepress:

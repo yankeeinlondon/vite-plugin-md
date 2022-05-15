@@ -7,7 +7,7 @@ import {
   select,
   wrap,
 } from 'happy-wrapper'
-import type { CodeBlockMeta, CodeOptions } from '../types'
+import type { CodeBlockMeta, CodeOptions } from '../code-types'
 
 const evenOdd = (lineNumber: number) => (el: IElement) => lineNumber % 2 === 0
   ? addClass('even')(el)

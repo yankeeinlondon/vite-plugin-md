@@ -1,8 +1,8 @@
 import { flow, identity } from 'fp-ts/lib/function'
 import { addClass, select, setAttribute } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../types'
-import type { CodeBlockMeta, CodeOptions } from '../types'
-import { Modifier } from '../types'
+import type { CodeBlockMeta, CodeOptions } from '../code-types'
+import { Modifier } from '../code-types'
 
 /**
  * Adds classes to the code-block's global wrapper node.

@@ -354,8 +354,6 @@ describe('table format for code blocks', () => {
       })],
     })
 
-    console.log(html)
-
     const body = select(html)
     const headingRow = body.findFirst('.heading-row', 'couldn\'t find .heading-row!')
     const codeWrapper = body.findFirst('.code-wrapper', 'couldn\'t find .code-wrapper!')

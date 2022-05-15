@@ -108,6 +108,17 @@ export type Parser<S extends IPipelineStage> = S extends 'parser' | 'parsed' | '
     }
   : {}
 
+/**
+ * The **Route** custom-block can be configured with these properties.
+ *
+ * Note: this is best done with the _meta_ builder
+ */
+export interface RouteConfig {
+  name?: string
+  path?: string
+  meta?: Record<string, any>
+}
+
 export type MetaExtracted<S extends IPipelineStage> = S extends 'initialize'
   ? {}
   : {
@@ -125,10 +136,10 @@ export type MetaExtracted<S extends IPipelineStage> = S extends 'initialize'
       meta: MetaProperty[]
 
       /**
-       * Meta properties which are to be added to the VueJS router's "meta" attribute
-       * for this page's route
+       * Meta properties associated with a page's route; typically used with
+       * the "meta" builder.
        */
-      routeMeta: Record<string, any>
+      routeMeta?: RouteConfig
 
       /**
        * Non-meta tags that will be put into the HEAD section of the page

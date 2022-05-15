@@ -11,7 +11,12 @@ exports[`meta() snapshots > HTML is consistent 1`] = `
 </div>"
 `;
 
-exports[`meta() snapshots > custom blocks are consistent 1`] = `[]`;
+exports[`meta() snapshots > custom blocks are consistent 1`] = `
+[
+  "<route>{ {} }</route>
+",
+]
+`;
 
 exports[`meta() snapshots > frontmatter is consistent 1`] = `
 {
@@ -19,6 +24,7 @@ exports[`meta() snapshots > frontmatter is consistent 1`] = `
   "excerpt": undefined,
   "image": "facebook.png",
   "layout": "yowza",
+  "name": "My Name",
   "title": "Metadata Rules",
 }
 `;
@@ -27,9 +33,10 @@ exports[`meta() snapshots > script blocks are consistent 1`] = `
 "
 <script setup>
   
-  defineExpose({ frontmatter: {\\"title\\":\\"Metadata Rules\\",\\"byline\\":\\"who loves ya baby?\\",\\"layout\\":\\"yowza\\",\\"image\\":\\"facebook.png\\"} })
+  defineExpose({ frontmatter: {\\"title\\":\\"Metadata Rules\\",\\"name\\":\\"My Name\\",\\"byline\\":\\"who loves ya baby?\\",\\"layout\\":\\"yowza\\",\\"image\\":\\"facebook.png\\"} })
   
  const title = \\"Metadata Rules\\"
+ const name = \\"My Name\\"
  const byline = \\"who loves ya baby?\\"
  const layout = \\"yowza\\"
  const image = \\"facebook.png\\"
@@ -38,6 +45,6 @@ exports[`meta() snapshots > script blocks are consistent 1`] = `
 
 <script>
   /** frontmatter meta-data for MD page **/
-  export const frontmatter = {\\"title\\":\\"Metadata Rules\\",\\"byline\\":\\"who loves ya baby?\\",\\"layout\\":\\"yowza\\",\\"image\\":\\"facebook.png\\"}
+  export const frontmatter = {\\"title\\":\\"Metadata Rules\\",\\"name\\":\\"My Name\\",\\"byline\\":\\"who loves ya baby?\\",\\"layout\\":\\"yowza\\",\\"image\\":\\"facebook.png\\"}
 </script>"
 `;

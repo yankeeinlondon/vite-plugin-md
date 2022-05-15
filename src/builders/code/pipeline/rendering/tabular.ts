@@ -10,7 +10,7 @@ import {
   select,
 } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../../types'
-import type { CodeBlockMeta } from '../../types'
+import type { CodeBlockMeta } from '../../code-types'
 
 /**
    * In tabular structure, code is laid out in the following structure:

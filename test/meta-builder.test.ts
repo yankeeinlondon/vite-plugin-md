@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { select } from 'happy-wrapper'
 import { resolveOptions } from '../src/options'
 import { meta } from '../src/index'
 import type { Options } from '../src/types'
@@ -22,7 +23,7 @@ describe('use "meta" builder for frontmatterPreprocess', async () => {
     expect(sfc.frontmatter.image).toEqual('facebook.png')
 
     expect(sfc.head.title).toEqual('Metadata Rules')
-    expect(sfc.routeMeta.layout).toEqual('yowza')
+    expect(sfc.routeMeta?.meta?.layout).toEqual('yowza')
     expect(sfc.meta.find(p => p.key === 'title')).toBeDefined()
     expect(sfc.meta.find(p => p.key === 'image')).toBeDefined()
   })
@@ -133,6 +134,49 @@ describe('use "meta" builder for frontmatterPreprocess', async () => {
       })],
     })
     expect(sfc4.frontmatter.category).toBe('top-secret')
+  })
+})
+
+describe.only('meta() can manage route meta', () => {
+  it.only('manually entering a route in markdown content is picked up and used', async () => {
+    const sfc = await composeFixture('meta', { builders: [meta()] })
+    console.log(sfc.component)
+
+    expect(sfc.frontmatter.layout).toBe('yowza')
+    // custom blocks were created
+    expect(sfc.customBlocks.length).toBeGreaterThan(0)
+    expect(sfc.component).toContain('<route')
+    // isolate route config
+    const routes = select(sfc.component).findAll('route')
+    expect(routes).toHaveLength(1)
+    expect(routes[0].textContent).toContain('"layout":"yowza"')
+  })
+
+  it.only('setting "layout" adds a custom block for a route', async () => {
+    const sfc = await composeFixture('meta-manual', { builders: [meta()] })
+
+    expect(sfc.frontmatter.layout).not.toBe('yowza')
+    // custom blocks were created
+    expect(sfc.customBlocks.length).toBeGreaterThan(0)
+    expect(sfc.component).toContain('<route')
+    // isolate route config
+    const routes = select(sfc.component).findAll('route')
+    expect(routes).toHaveLength(1)
+    expect(routes[0].textContent).toContain('"layout":"yowza"')
+  })
+
+  it('configuring a name callback allows us to give a name to our routes', async () => {
+    const sfc = await composeFixture('meta', {
+      builders: [meta({
+        routeName: (filename, fm) => fm.name ? fm.name : `bespoke-${filename}`,
+      })],
+    })
+
+    expect(sfc.frontmatter.name).toBe('My Name')
+    // isolate route config
+    const routes = select(sfc.component).findAll('route')
+    expect(routes).toHaveLength(1)
+    expect(routes[0].textContent).toContain('"name":"My Name"')
   })
 })
 

@@ -1,8 +1,8 @@
 import { identity, pipe } from 'fp-ts/lib/function'
 import { addClass, into, setAttribute, toHtml } from 'happy-wrapper'
 import type { Pipeline, PipelineStage } from '../../../types'
-import type { CodeBlockMeta } from '../types'
-import { Modifier } from '../types'
+import type { CodeBlockMeta } from '../code-types'
+import { Modifier } from '../code-types'
 
 /**
  * Updates the `pre` block with classes, style, and adds the code block in as

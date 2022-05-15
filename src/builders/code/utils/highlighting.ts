@@ -1,5 +1,5 @@
-import type { CodeBlockMeta, CodeOptions, LineCallback, PrismOptions, ShikiOptions } from '../types'
-import { Highlighter } from '../types'
+import type { CodeBlockMeta, CodeOptions, LineCallback, PrismOptions, ShikiOptions } from '../code-types'
+import { Highlighter } from '../code-types'
 import { validPrismLanguage } from './prism-languages'
 
 export function isValidLanguage(h: Highlighter, meta: CodeBlockMeta<'code'>): boolean {

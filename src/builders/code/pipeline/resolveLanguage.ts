@@ -1,4 +1,4 @@
-import type { CodeBlockMeta, CodeOptions } from '../types'
+import type { CodeBlockMeta, CodeOptions } from '../code-types'
 import { isValidLanguage, prismTranslateAliases, usesPrismHighlighting } from '../utils'
 
 /**

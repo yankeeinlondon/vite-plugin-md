@@ -1,8 +1,9 @@
 import type { DocumentFragment } from 'happy-dom'
 import type Prism from 'prismjs'
 import type { ILanguageRegistration, IThemeRegistration, Lang, Highlighter as ShikiHighlighter } from 'shiki'
-import type { Pipeline, PipelineStage } from '../../../types'
-import type { PrismLanguage } from '../utils'
+import type { Pipeline, PipelineStage } from '../../types'
+import type { CodeColorTheme } from './styles/color/color-types'
+import type { PrismLanguage } from './utils'
 
 export enum Highlighter {
   /** [Shiki Highlighter](https://shiki.matsu.io/) */
@@ -127,7 +128,7 @@ export interface PrismOptions extends CommonOptions {
   /** Prism plugins */
   plugins: string[]
   /**
-   * Callback for Prism initialisation. Useful for initialising plugins.
+   * Callback for Prism initialization. Useful for initializing plugins.
    * @param prism The Prism instance that will be used by the plugin.
    */
   init: (prism: typeof Prism) => void
@@ -144,6 +145,8 @@ export interface PrismOptions extends CommonOptions {
    * to each option if it is set to {@code undefined}.
    */
   defaultLanguage?: string
+
+  theme?: 'base' | 'lighting' | 'material' | CodeColorTheme<any>
 }
 
 /**
@@ -269,7 +272,7 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
   codeBlockWrapper: S extends 'code' ? string : DocumentFragment
 
   /**
-   * All highlightlighting information will be captured as
+   * All highlighting information will be captured as
    * an array of `HighlightToken` tokens.
    */
   highlightTokens: HighlightToken[]
@@ -341,14 +344,14 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
    */
   trace?: string
   /**
-   * The properties found on the top line (to right of language and backticks), these
+   * The properties found on the top line (to right of language and back ticks), these
    * key/value pairs will be assigned to the
    */
   props: CodeBlockProperties
   modifiers: Modifier[]
   /**
    * not sure how useful this is yet ... currently always evaluates to three
-   * backticks
+   * back ticks
    */
   markup: string
 }

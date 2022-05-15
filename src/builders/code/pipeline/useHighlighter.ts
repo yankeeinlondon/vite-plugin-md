@@ -1,5 +1,5 @@
 import { pipe } from 'fp-ts/lib/function'
-import type { CodeBlockMeta, CodeOptions, HighlighterFunction, LineClassFn } from '../types'
+import type { CodeBlockMeta, CodeOptions, HighlighterFunction, LineClassFn } from '../code-types'
 import { isLineCallback } from '../utils'
 
 /**

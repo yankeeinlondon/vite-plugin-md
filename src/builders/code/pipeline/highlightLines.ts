@@ -1,7 +1,7 @@
 import { identity, pipe } from 'fp-ts/lib/function'
 import type { IElement } from 'happy-dom'
 import { addClass, select } from 'happy-wrapper'
-import type { CodeBlockMeta, CodeOptions } from '../types'
+import type { CodeBlockMeta, CodeOptions } from '../code-types'
 
 /** converts HighlightTokens to lines of code */
 function linesToHighlight(fence: CodeBlockMeta<'dom'>): number[] {

@@ -1,8 +1,8 @@
 import { PipelineStage } from '../../types'
 import { createBuilder } from '../createBuilder'
+import type { CodeOptions, PrismOptions } from './code-types'
+import { Highlighter } from './code-types'
 import { fence } from './mdi'
-import type { CodeOptions, PrismOptions } from './types/code-types'
-import { Highlighter } from './types/code-types'
 
 const PRISM_DEFAULTS: Partial<PrismOptions> = {
   engine: Highlighter.prism,

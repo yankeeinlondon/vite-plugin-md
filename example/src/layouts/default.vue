@@ -19,7 +19,7 @@ const name = 'home'
         <dark-mode />
         <span class="npm-info flex" title="go to npm">
           <a href="https://www.npmjs.com/package/vite-plugin-md">
-            <img src="https://img.shields.io/npm/v/vite-plugin-md?color=a1b858)">
+            <img src="https://img.shields.io/npm/v/vite-plugin-md?color=a1b858)" class="min-w-88px">
           </a>
         </span>
       </div>

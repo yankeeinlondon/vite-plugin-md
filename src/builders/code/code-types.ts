@@ -1,6 +1,5 @@
-import type { DocumentFragment } from 'happy-dom'
+import type { Fragment } from 'happy-wrapper'
 import type Prism from 'prismjs'
-import type { ILanguageRegistration, IThemeRegistration, Lang, Highlighter as ShikiHighlighter } from 'shiki'
 import type { Pipeline, PipelineStage } from '../../types'
 import type { CodeColorTheme } from './styles/color/color-types'
 import type { PrismLanguage } from './utils'
@@ -118,6 +117,8 @@ export interface CommonOptions {
    * @default false
    */
   clipboard: boolean | BlockCallback<boolean>
+
+  theme?: 'base' | 'lighting' | 'material' | CodeColorTheme<any>
 }
 
 export interface PrismOptions extends CommonOptions {
@@ -145,30 +146,9 @@ export interface PrismOptions extends CommonOptions {
    * to each option if it is set to {@code undefined}.
    */
   defaultLanguage?: string
-
-  theme?: 'base' | 'lighting' | 'material' | CodeColorTheme<any>
 }
 
-/**
- * Allows a user to register both a light and dark theme for
- * code blocks.
- */
-export interface IDarkModeThemeRegistration {
-  dark: IThemeRegistration
-  light: IThemeRegistration
-}
-
-export interface ShikiOptions extends CommonOptions {
-  /**
-   * The highlighter engine -- **Prism** or **Shiki** -- that will provide styling
-   */
-  engine: Highlighter.shiki
-  theme?: IThemeRegistration | IDarkModeThemeRegistration
-  langs?: ILanguageRegistration[]
-  highlighter?: ShikiHighlighter
-}
-
-export type CodeOptions = ShikiOptions | PrismOptions
+export type CodeOptions = PrismOptions
 
 /**
  * Modifiers are single character tokens which are allowed
@@ -267,9 +247,9 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
    */
   html: S extends 'complete' ? string : never
 
-  pre: S extends 'code' ? string : DocumentFragment
-  lineNumbersWrapper: S extends 'code' ? string : DocumentFragment
-  codeBlockWrapper: S extends 'code' ? string : DocumentFragment
+  pre: S extends 'code' ? string : Fragment
+  lineNumbersWrapper: S extends 'code' ? string : Fragment
+  codeBlockWrapper: S extends 'code' ? string : Fragment
 
   /**
    * All highlighting information will be captured as
@@ -299,22 +279,22 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
    * Typically not used but when a code block references an external file
    * AND the local code block _also_ has code, then it will be placed here
    */
-  aboveTheFoldCode?: S extends 'code' ? string : DocumentFragment
+  aboveTheFoldCode?: S extends 'code' ? string : Fragment
 
   /**
    * The code block; represented as either a string or a DOM tree
    * based on lifecycle
    */
-  code: S extends 'code' ? string : DocumentFragment
+  code: S extends 'code' ? string : Fragment
 
   /**
    * An optional heading to put above the code block
    */
-  heading?: S extends 'code' ? string : DocumentFragment
+  heading?: S extends 'code' ? string : Fragment
   /**
    * An optional footer to put under the code block
    */
-  footer?: S extends 'code' ? string : DocumentFragment
+  footer?: S extends 'code' ? string : Fragment
 
   /**
    * The number of lines in the code block
@@ -363,7 +343,7 @@ export type LineClassFn = (line: string) => string
  * convert it to and returns the HTML which provides tokenized style
  * for the language.
  */
-export type HighlighterFunction<T extends PrismLanguage | Lang> = (
+export type HighlighterFunction<T extends PrismLanguage> = (
   /** the code prior to being transformed */
   code: string,
   /** the language of the code */

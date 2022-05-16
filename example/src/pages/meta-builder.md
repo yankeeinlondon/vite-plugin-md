@@ -11,8 +11,6 @@ The `meta` builder is designed to help make managing meta data easy. The meta da
 3. `meta` properties in page's head section
 4. `route` properties
 
-<!-- <route>{"meta":{"layout":"home"}}</route> -->
-
 ## Frontmatter Properties
 
 The foundation of metadata in Markdown is usually _frontmatter_ and here is no different. The core ability to add a dictionary of name/value pairs as frontmatter and then refer to this data on the

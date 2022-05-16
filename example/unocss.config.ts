@@ -12,7 +12,7 @@ export default defineConfig({
   shortcuts: [
     [
       'btn',
-      'px-4 py-1 rounded border-0 ring-2 ring-teal-700 inline-block text-white cursor-pointer bg-teal-600 dark:bg-teal-500 hover:(bg-teal-700 dark:bg-teal-600) disabled:cursor-default disabled:bg-gray-600 disabled:opacity-50',
+      'px-4 py-2 rounded border-0 inline-block text-white cursor-pointer bg-teal-600 dark:bg-teal-500 hover:(bg-teal-700 dark:bg-teal-600) disabled:cursor-default disabled:bg-gray-600 disabled:opacity-50',
     ],
     ['icon-btn', 'inline-block cursor-pointer select-none opacity-75 transition duration-200 ease-in-out hover:opacity-100 hover:text-teal-600'],
     [

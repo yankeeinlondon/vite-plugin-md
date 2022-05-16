@@ -1,12 +1,14 @@
 import { pipe } from 'fp-ts/lib/function'
 import type MarkdownIt from 'markdown-it'
 import type { Pipeline, PipelineStage } from '../../../types'
+import type { CodeOptions } from '../code-types'
 import {
   convertBlocksToDomNodes,
   defaultBlocks,
   expandCodeBlockVariables,
   extractMarkdownItTokens,
   highlightLines,
+  inlineStyles,
   renderHtml,
   resolveLanguage,
   updateCodeBlockWrapper,
@@ -14,9 +16,6 @@ import {
   updatePreWrapper,
   useHighlighter, userRules,
 } from '../pipeline'
-import type {
-  CodeOptions,
-} from '../types'
 
 import { establishHighlighter } from './establishHighlighter'
 
@@ -48,6 +47,7 @@ export const fence = async (payload: Pipeline<PipelineStage.parser>, options: Co
         updateLineNumbers(options),
         highlightLines(options),
         updatePreWrapper(payload),
+        inlineStyles(payload, options),
         userRules('after', payload, options),
 
         renderHtml(payload, options),

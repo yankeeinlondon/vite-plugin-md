@@ -5,6 +5,7 @@ import { createSfcComponent } from './createSfcComponent'
 import { resolveOptions } from './options'
 import type { Options } from './types'
 export { link, meta, code } from './builders'
+// export { stylish } from './builders/code/styles/code-style'
 
 function VitePluginMarkdown(userOptions: Options = {}): Plugin {
   const options = resolveOptions(userOptions)

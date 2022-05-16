@@ -1,5 +1,4 @@
 import type { Frontmatter, MetaProperty, Pipeline, PipelineStage, RouteConfig } from '../../types'
-import type { BlockCallback } from '../code/types'
 import { createBuilder } from '../createBuilder'
 
 export type MetaFlag = [prop: string, defVal: boolean]

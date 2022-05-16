@@ -107,3 +107,65 @@ export const createElement = (el: Container | HTML, parent?: IElement): IElement
       else { throw new HappyMishap('Can not create an Element from passed in Document', { name: 'createElement(document)', inspect: d }) }
     },
   })(el)
+
+export interface CssVariable {
+  prop: string
+  value: string
+}
+
+/**
+ * Creates a new `<style>` node and provides a simple API surface to allow
+ * populating the contents
+ */
+export const createInlineStyle = <T extends string>(type: T = 'text/css' as T) => {
+  const node = createElement(`<style type="${type}" />`)
+
+  const variables: Record<'root' | 'local', CssVariable[]> = {
+    root: [],
+    local: [],
+  }
+
+  const api = {
+    addCssVariable(prop: string, value: string, scope: 'root' | 'local' = 'root') {
+      if (!(scope in variables))
+        variables[scope] = []
+
+      variables[scope].push({ prop, value })
+
+      return api
+    },
+    addClassDefinition(_klass: string, _value: string) {
+      return api
+    },
+
+    addCssVariables(dictionary: Record<string, string>, scope: 'root' | 'local' = 'root') {
+      Object.keys(dictionary).forEach(p => api.addCssVariable(p, dictionary[p], scope))
+
+      return api
+    },
+
+    finish() {
+      let text = ''
+      // global variables
+      Object.keys(variables.root).forEach((v, idx) => {
+        text += idx === 0
+          ? `:root {\n  --${v}: ${variables.root[v as any].value};`
+          : `  --${v}: ${variables.root[v as any].value};`
+      })
+      if (variables.root.length > 0)
+        text += '}\n'
+      // local variables
+      Object.keys(variables.local).forEach((v, idx) => {
+        text += idx === 0
+          ? `:root {\n  --${v}: ${variables.root[v as any].value};`
+          : `  --${v}: ${variables.root[v as any].value};`
+      })
+      // properties
+
+      node.append(text)
+      return node
+    },
+  }
+
+  return api
+}

@@ -50,7 +50,10 @@ const config = defineConfig({
         defaults: {
           requireAuth: () => false,
         },
-      }), link(), code()],
+      }), link(), code({
+        theme: 'base',
+        layoutStructure: 'tabular',
+      })],
     }),
 
     Inspect(),

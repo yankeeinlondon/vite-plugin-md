@@ -10,6 +10,7 @@ import {
   createDocument,
   createElement,
   createFragment,
+  createInlineStyle,
   createTextNode,
   filterClasses,
   getChildren,
@@ -135,6 +136,16 @@ describe('HappyDom\'s can be idempotent', () => {
 
     const textNode = createTextNode('hello')
     expect(textNode.hasChildNodes()).toBeFalsy()
+  })
+
+  it.skip('inline style API', () => {
+    const style = createInlineStyle()
+      .addCssVariable('my-width', '45px')
+      .addCssVariable('my-height', '65px')
+      .finish()
+    // console.log(style.textContent)
+
+    console.log('style', toHtml(style))
   })
 
   it('changeTag() utility works as expected with all container types', () => {

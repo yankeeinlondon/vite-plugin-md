@@ -138,9 +138,8 @@ describe('use "meta" builder for frontmatterPreprocess', async () => {
 })
 
 describe.only('meta() can manage route meta', () => {
-  it.only('manually entering a route in markdown content is picked up and used', async () => {
+  it('manually entering a route in markdown content is picked up and used', async () => {
     const sfc = await composeFixture('meta', { builders: [meta()] })
-    console.log(sfc.component)
 
     expect(sfc.frontmatter.layout).toBe('yowza')
     // custom blocks were created
@@ -152,7 +151,7 @@ describe.only('meta() can manage route meta', () => {
     expect(routes[0].textContent).toContain('"layout":"yowza"')
   })
 
-  it.only('setting "layout" adds a custom block for a route', async () => {
+  it('setting "layout" adds a custom block for a route', async () => {
     const sfc = await composeFixture('meta-manual', { builders: [meta()] })
 
     expect(sfc.frontmatter.layout).not.toBe('yowza')

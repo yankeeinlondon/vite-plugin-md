@@ -1,24 +1,9 @@
 // import { escapeHtml } from 'markdown-it/lib/common/utils'
-import type { Lang } from 'shiki'
-import type {
-  CodeOptions,
-  HighlighterFunction,
-  LineClassFn,
-  PrismOptions,
-  ShikiOptions,
-} from '../types'
+
+import type { CodeOptions, HighlighterFunction, LineClassFn, PrismOptions } from '../code-types'
 import type { PrismLanguage } from '../utils'
 import { usesPrismHighlighting } from '../utils/highlighting'
 import { getPrismHighlighter } from './prism'
-import { getShikiHighlighter } from './shiki'
-
-const shiki = async (options: ShikiOptions): Promise<HighlighterFunction<Lang>> => {
-  const api = await getShikiHighlighter(options)
-
-  return (code: string, lang: Lang, klass: LineClassFn): string => {
-    return api.highlight(code, lang, klass)
-  }
-}
 
 const prism = (options: PrismOptions): HighlighterFunction<PrismLanguage> => {
   return (code: string, lang: PrismLanguage, klass: LineClassFn): string => {
@@ -34,4 +19,4 @@ const prism = (options: PrismOptions): HighlighterFunction<PrismLanguage> => {
 export const establishHighlighter = async (options: CodeOptions) =>
   usesPrismHighlighting(options)
     ? prism(options)
-    : shiki(options)
+    : null

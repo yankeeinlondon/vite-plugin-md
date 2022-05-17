@@ -1,7 +1,8 @@
 // Vitest Snapshot v1
 
 exports[`hoisted script blocks > snapshot of component section remains the same 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\">
 <h1>{{title}}</h1>

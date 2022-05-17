@@ -1,23 +1,7 @@
 import { PipelineStage } from '../../types'
 import { createBuilder } from '../createBuilder'
-import type { CodeOptions, PrismOptions } from './code-types'
-import { Highlighter } from './code-types'
+import type { CodeOptions } from './code-types'
 import { fence } from './mdi'
-
-const PRISM_DEFAULTS: Partial<PrismOptions> = {
-  engine: Highlighter.prism,
-  plugins: [],
-  init: () => {
-    // do nothing by default
-  },
-  defaultLanguageForUnknown: 'bash',
-  defaultLanguageForUnspecified: 'bash',
-  defaultLanguage: undefined,
-}
-const SHIKI_DEFAULTS = {
-  engine: Highlighter.shiki,
-  theme: 'nord',
-}
 
 /**
  * `code` Builder API
@@ -38,10 +22,8 @@ export const code = createBuilder('code', PipelineStage.parser)
       headingClasses: ['heading'],
       footerClasses: ['footer'],
       layoutStructure: 'flex-lines',
-      ...(o.engine === Highlighter.shiki
-        ? SHIKI_DEFAULTS
-        : PRISM_DEFAULTS
-      ),
+      defaultLanguageForUnknown: 'markdown',
+      defaultLanguageForUnspecified: 'markdown',
       ...o,
     } as CodeOptions
 

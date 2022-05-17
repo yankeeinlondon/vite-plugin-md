@@ -1,4 +1,4 @@
-import type { Document, DocumentFragment, IElement } from 'happy-dom'
+import type { Document, DocumentFragment, IElement, INode, IText } from 'happy-dom'
 import { createFragment } from './create'
 import { describeNode, inspect } from './diagnostics'
 import { HappyMishap } from './errors'
@@ -47,6 +47,16 @@ export const select = <D extends Document | DocumentFragment | IElement | HTML>(
         throw new HappyMishap(`${errorMsg}.\n\nThe HTML from the selected DOM node is:\n${toHtml(rootNode)}`, { name: 'select.findFirst()', inspect: rootNode })
 
       return result as undefined extends E ? IElement | null : IElement
+    },
+
+    append: (content: (IText | IElement | HTML | undefined) | (IText | IElement | HTML | undefined)[]) => {
+      if (!content)
+        return api
+
+      const nodes = !Array.isArray(content) ? [content] : content.filter(i => i) as (INode | HTML)[]
+      rootNode.append(...nodes)
+
+      return api
     },
 
     /**

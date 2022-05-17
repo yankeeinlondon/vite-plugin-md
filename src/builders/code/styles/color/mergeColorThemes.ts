@@ -1,11 +1,9 @@
-import type { IElement } from 'happy-dom'
-import { createTextNode, isElement } from 'happy-wrapper'
 import type { CodeColorTheme, ColorByMode } from './color-types'
 
-function left(item: string | ColorByMode) {
+export function left(item: string | ColorByMode) {
   return Array.isArray(item) ? item[0] : item
 }
-function right(item: string | ColorByMode) {
+export function right(item: string | ColorByMode) {
   return Array.isArray(item) ? item[1] : item
 }
 
@@ -26,14 +24,3 @@ export const mergeColorThemes = <T1 extends CodeColorTheme<any>, T2 extends Code
   )
 }
 
-export const setCodeBlockColors = (el: HTMLElement | IElement, theme: CodeColorTheme<any>) => {
-  Object.keys(theme).forEach((prop) => {
-    if (isElement(el)) {
-      el.append(createTextNode(`  --code-color-${prop}`))
-    }
-    else {
-      el.style.setProperty(`--code-color-${prop}`, left(theme[prop as keyof CodeColorTheme<any>]))
-      el.style.setProperty(`--dark-code-color-${prop}`, right(theme[prop as keyof CodeColorTheme<any>]))
-    }
-  })
-}

@@ -31,10 +31,12 @@ page is unchanged from the base behavior of this plugin but we offer some additi
     Beyond this, we can be more _dynamic_ and rather than set a value we can pass in a callback:
 
     ```ts
-    Markdown({ 
-        builders: [
-            meta({ defaults: { needsAuth(filename) => filename.includes('secure') ? true : false } )
-        ]
+    Markdown({
+      builders: [
+        meta({
+          defaults: { needsAuth: filename => !!filename.includes('secure') }
+        })
+      ]
     })
     ```
 

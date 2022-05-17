@@ -136,6 +136,11 @@ export interface NodeSelector<T extends Container | 'html'> {
   findAll: <S extends string | undefined>(sel: S) => IElement[]
 
   /**
+   * Appends one or more elements to the root selected node
+   */
+  append: (content?: (IText | IElement | HTML | undefined) | (IText | IElement | HTML | undefined)[]) => NodeSelector<T>
+
+  /**
    * Allows the injection of a callback which will be used to mutate on the first `IElement` node
    * which matches the first
    */

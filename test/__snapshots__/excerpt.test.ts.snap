@@ -11,7 +11,12 @@ exports[`excerpt snapshots > HTML is consistent 1`] = `
 </div>"
 `;
 
-exports[`excerpt snapshots > custom blocks are consistent 1`] = `[]`;
+exports[`excerpt snapshots > custom blocks are consistent 1`] = `
+[
+  "<route lang=\\"json\\">{}</route>
+",
+]
+`;
 
 exports[`excerpt snapshots > frontmatter is consistent 1`] = `
 {

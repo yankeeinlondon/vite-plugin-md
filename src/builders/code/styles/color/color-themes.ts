@@ -1,5 +1,5 @@
 import type { CodeColorTheme, Color, ColorByMode } from './color-types'
-import { mergeColorThemes } from './color-utils'
+import { mergeColorThemes } from './mergeColorThemes'
 
 export const baseLight: CodeColorTheme<Color> = {
   foreground: '#393a34',

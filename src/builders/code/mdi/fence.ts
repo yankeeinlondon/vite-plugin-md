@@ -3,6 +3,7 @@ import type MarkdownIt from 'markdown-it'
 import type { Pipeline, PipelineStage } from '../../../types'
 import type { CodeOptions } from '../code-types'
 import {
+  addLanguage,
   convertBlocksToDomNodes,
   defaultBlocks,
   expandCodeBlockVariables,
@@ -10,13 +11,11 @@ import {
   highlightLines,
   inlineStyles,
   renderHtml,
-  resolveLanguage,
   updateCodeBlockWrapper,
   updateLineNumbers,
   updatePreWrapper,
   useHighlighter, userRules,
 } from '../pipeline'
-
 import { establishHighlighter } from './establishHighlighter'
 
 /**
@@ -25,7 +24,6 @@ import { establishHighlighter } from './establishHighlighter'
  */
 export const fence = async (payload: Pipeline<PipelineStage.parser>, options: CodeOptions) => {
   const highlighter = await establishHighlighter(options)
-
   // return a Markdown-IT plugin
   return (
     md: MarkdownIt,
@@ -35,11 +33,10 @@ export const fence = async (payload: Pipeline<PipelineStage.parser>, options: Co
       const fence = pipe(
         extractMarkdownItTokens(payload, state[idx]),
         defaultBlocks(payload, options),
-        resolveLanguage(options),
 
         userRules('before', payload, options),
         expandCodeBlockVariables(payload),
-        useHighlighter(highlighter, options),
+        useHighlighter(payload, highlighter, options),
 
         convertBlocksToDomNodes(payload, options),
 
@@ -50,6 +47,7 @@ export const fence = async (payload: Pipeline<PipelineStage.parser>, options: Co
         inlineStyles(payload, options),
         userRules('after', payload, options),
 
+        addLanguage(options),
         renderHtml(payload, options),
       )
 

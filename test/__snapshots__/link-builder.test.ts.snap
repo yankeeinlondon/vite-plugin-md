@@ -1,7 +1,8 @@
 // Vitest Snapshot v1
 
 exports[`link testing > component snapshot is consistent 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\"><h1>Links</h1>
 <ul>

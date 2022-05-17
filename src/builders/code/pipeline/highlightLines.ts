@@ -1,5 +1,5 @@
 import { identity, pipe } from 'fp-ts/lib/function'
-import type { IElement } from 'happy-dom'
+import type { IElement } from 'happy-wrapper'
 import { addClass, select } from 'happy-wrapper'
 import type { CodeBlockMeta, CodeOptions } from '../code-types'
 
@@ -48,10 +48,10 @@ export const highlightLines = (_o: CodeOptions) => (fence: CodeBlockMeta<'dom'>)
     trace: `Highlighted line(s) were: ${hl.join(', ')}`,
 
     code: select(fence.code)
-      .updateAll('.code-line')((el, idx) => highlight(el, idx as number))
+      .updateAll('.code-line')(highlight)
       .toContainer(),
     lineNumbersWrapper: select(fence.lineNumbersWrapper)
-      .updateAll('.line-number')((el, idx) => highlight(el, idx as number))
+      .updateAll('.line-number')(highlight)
       .toContainer(),
   }
 }

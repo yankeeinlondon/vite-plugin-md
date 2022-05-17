@@ -1,15 +1,7 @@
 import type { Fragment } from 'happy-wrapper'
-import type Prism from 'prismjs'
+import type { Grammar } from 'prismjs'
 import type { Pipeline, PipelineStage } from '../../types'
 import type { CodeColorTheme } from './styles/color/color-types'
-import type { PrismLanguage } from './utils'
-
-export enum Highlighter {
-  /** [Shiki Highlighter](https://shiki.matsu.io/) */
-  shiki = 'shiki',
-  /** [PrismJS Highlighter](https://prismjs.com/)  */
-  prism = 'prism',
-}
 
 export type HTML = string
 
@@ -32,7 +24,25 @@ export type LineCallback = (
  */
 export type BlockCallback<T> = (fence: CodeBlockMeta<'code'>, filename: string, frontmatter: Pipeline<PipelineStage.parser>['frontmatter']) => T
 
-export interface CommonOptions {
+export interface CodeOptions {
+  plugins: string[]
+  /**
+   * The language to use for code blocks that specify a language that Prism does not know.
+   *
+   * @default 'plain'
+   */
+  defaultLanguageForUnknown?: string
+  /**
+   * The language to use for code blocks that do not specify a language.
+   *
+   * @default 'plain'
+   */
+  defaultLanguageForUnspecified: string
+  /**
+   * Shorthand to set both {@code defaultLanguageForUnknown} and {@code defaultLanguageForUnspecified} to the same value. Will be copied
+   * to each option if it is set to {@code undefined}.
+   */
+  defaultLanguage?: string
   /**
    * Hook into the fence mutation process _before_ the builder
    * gets involved.
@@ -119,36 +129,26 @@ export interface CommonOptions {
   clipboard: boolean | BlockCallback<boolean>
 
   theme?: 'base' | 'lighting' | 'material' | CodeColorTheme<any>
-}
 
-export interface PrismOptions extends CommonOptions {
   /**
-   * The highlighter engine -- **Prism** or **Shiki** -- that will provide styling
+   * Should you want to add your own language grammar you can:
+   * [Extending Prism Language Definitions](https://prismjs.com/extending.html#language-definitions)
    */
-  engine: Highlighter.prism
-  /** Prism plugins */
-  plugins: string[]
-  /**
-   * Callback for Prism initialization. Useful for initializing plugins.
-   * @param prism The Prism instance that will be used by the plugin.
-   */
-  init: (prism: typeof Prism) => void
-  /**
-   * The language to use for code blocks that specify a language that Prism does not know.
-   */
-  defaultLanguageForUnknown?: string
-  /**
-   * The language to use for code blocks that do not specify a language.
-   */
-  defaultLanguageForUnspecified: string
-  /**
-   * Shorthand to set both {@code defaultLanguageForUnknown} and {@code defaultLanguageForUnspecified} to the same value. Will be copied
-   * to each option if it is set to {@code undefined}.
-   */
-  defaultLanguage?: string
-}
+  languageGrammars?: Record<string, Grammar>
 
-export type CodeOptions = PrismOptions
+  /**
+   * Code blocks will default to the following inline style:
+   * ```css
+   * .code-block {
+   *    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+   * }
+   * ```
+   *
+   * but you can override this inline style if you wish. Obviously you can also just
+   * target the `.code-block` class to whatever you like
+   */
+  codeFont?: string
+}
 
 /**
  * Modifiers are single character tokens which are allowed
@@ -311,7 +311,7 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
    */
   level: number
   /**
-   * The identified language in the code block
+   * The language used by the highlighter
    */
   lang: string
 
@@ -339,15 +339,13 @@ export interface CodeBlockMeta<S extends CodeParsingStage> {
 export type LineClassFn = (line: string) => string
 
 /**
- * A function which receives a code block's text, the language to
- * convert it to and returns the HTML which provides tokenized style
- * for the language.
+ * A _highlighter_ API which is implementation neutral.
  */
-export type HighlighterFunction<T extends PrismLanguage> = (
+export type Highlighter = (
   /** the code prior to being transformed */
   code: string,
   /** the language of the code */
-  lang: T,
+  lang: string,
   /** a callback fn which returns the line's class string */
   lineClass: LineClassFn
-) => string
+) => [code: string, langUsed: string]

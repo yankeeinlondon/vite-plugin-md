@@ -9,6 +9,7 @@ import type {
 } from '../types'
 import {
   applyMarkdownItOptions,
+  baseStyling,
   convertToDom,
   createParser,
   escapeCodeTagInterpolation,
@@ -38,8 +39,15 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
   const payload: Pipeline<PipelineStage.initialize> = {
     fileName: id,
     content: raw.trimStart(),
-    options,
+    head: {},
+    routeMeta: undefined,
     viteConfig: config,
+    vueStyleBlocks: {},
+    codeBlockLanguages: {
+      langsRequested: [],
+      langsUsed: [],
+    },
+    options,
   }
 
   const handlers = gatherBuilderEvents(options)
@@ -54,6 +62,7 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
   /** extract the meta-data from the MD content */
   const metaExtracted = flow(
     extractFrontmatter,
+    baseStyling,
     frontmatterPreprocess,
     handlers(PipelineStage.metaExtracted),
   )
@@ -85,6 +94,11 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
     escapeCodeTagInterpolation,
     handlers(PipelineStage.dom),
   )
+
+  // TODO: broken into "flow groups" defined above because it would
+  // appear that fp-ts _typing_ breaks down after some set number
+  // of steps ... actually prefer a single list so might be worth
+  // investigating whether there's a way to work around
 
   // construct the async pipeline
   const result = await pipe(

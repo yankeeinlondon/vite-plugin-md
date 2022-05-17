@@ -45,15 +45,19 @@ const config = defineConfig({
 
     Markdown({
       headEnabled: true,
-      builders: [meta({
-        routeProps: ['layout', 'requireAuth'],
-        defaults: {
-          requireAuth: () => false,
-        },
-      }), link(), code({
-        theme: 'base',
-        layoutStructure: 'tabular',
-      })],
+      builders: [
+        meta({
+          routeProps: ['layout', 'requireAuth'],
+          defaults: {
+            requireAuth: () => false,
+          },
+        }),
+        link(),
+        code({
+          theme: 'base',
+          layoutStructure: 'tabular',
+        }),
+      ],
     }),
 
     Inspect(),

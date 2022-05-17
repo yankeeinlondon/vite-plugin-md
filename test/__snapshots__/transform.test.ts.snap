@@ -3,6 +3,8 @@
 exports[`transform snapshots > customBlocks remain the same 1`] = `
 [
   "<style>h1 { color: red }</style>",
+  "<route lang=\\"json\\">{}</route>
+",
 ]
 `;
 

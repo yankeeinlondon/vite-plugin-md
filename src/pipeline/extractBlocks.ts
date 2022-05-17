@@ -1,20 +1,33 @@
 import { extract, select, toHtml } from 'happy-wrapper'
-import type { IElement } from 'happy-dom'
-import type { HTML } from 'happy-wrapper'
+import type { HTML, IElement } from 'happy-wrapper'
 import { isVue2, transformer, wrap } from '../utils'
 import type {
+  Pipeline,
+  PipelineStage,
   ResolvedOptions,
 } from '../types'
 
+const hashToArray = (hash?: Record<string, IElement>): IElement[] => hash
+  ? Object.keys(hash).reduce(
+    (acc, k) => {
+      acc.push(hash[k])
+      return acc
+    },
+    [] as IElement[],
+  )
+  : []
+
 /**
  * Finds any references to `<script>` blocks and extracts it
- * from the html portion.
+ * from the html portion. This is then added to scriptBlocks
+ * which been accumulated by calls to `addStyleBlock()`
  */
-function extractScriptBlocks(html: HTML) {
+function extractScriptBlocks(html: HTML, p: Pipeline<PipelineStage.dom>) {
   const scripts: IElement[] = []
   const extractor = extract(scripts)
   html = select(html)
     .updateAll('script')(extractor)
+    .append(hashToArray(p.vueStyleBlocks))
     .toContainer()
 
   return { html, scripts: scripts.map(el => toHtml(el)) }
@@ -48,7 +61,7 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
   /** HTML converted back to a string */
   let html = toHtml(payload.html)
   // extract script blocks, adjust HTML
-  const hoistScripts = extractScriptBlocks(html)
+  const hoistScripts = extractScriptBlocks(html, payload)
   html = hoistScripts.html
   const hoistedScripts: string[] = hoistScripts.scripts
 

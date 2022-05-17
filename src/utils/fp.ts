@@ -29,7 +29,7 @@ export const transformer = <F extends IPipelineStage, T extends IPipelineStage>(
           return result
         },
         (e) => {
-          return `There was a problem during the "${name}" stage in the transform pipeline:\n\n  ${e instanceof Error ? `${e.message}\n\n${e.stack}` : String(e)}`
+          return `Problem encountered during the "${name}" stage of the vite-plugin-md transform pipeline:\n\n  ${e instanceof Error ? `${e.message}\n\n${e.stack}` : String(e)}`
         },
       ),
     ),

@@ -8,12 +8,6 @@ import App from './App.vue'
 import './styles/main.css'
 import 'uno.css'
 
-import 'prismjs'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-markup'
-import 'prismjs/components/prism-markup-templating'
 App.name = 'Example App'
 
 const routes = setupLayouts(generatedRoutes)

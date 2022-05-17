@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { getAttribute, getClassList, select, toHtml } from 'happy-wrapper'
 import { composeSfcBlocks } from '../src/pipeline'
 import { code } from '../src/index'
+import { getPrismGrammar } from '../src/builders/code/mdi/establishHighlighter'
+import type { CodeOptions } from '../src/builders/code/code-types'
 import { composeFixture, getFixture } from './utils'
 
 describe('code() builder using Prism (incl generalized tests)', () => {
@@ -14,12 +16,16 @@ describe('code() builder using Prism (incl generalized tests)', () => {
 
     expect(templateBlock).toMatchSnapshot()
     // note: "ts" is in MD but alias converts to "typescript"
-    expect(templateBlock.includes('language-typescript')).toBeTruthy()
+    expect(
+      templateBlock.includes('language-typescript'),
+      templateBlock,
+    ).toBeTruthy()
     expect(
       templateBlock.includes('language-bash'),
       'while "bash" is the default language, it should not be falling back to that with a valid language detected',
     ).toBeFalsy()
   })
+
   it('"unknown language" fallback is used when language stated but not matched', async () => {
     const { templateBlock } = await composeSfcBlocks(
       'test/fixtures/ts-code-block.md',
@@ -27,23 +33,25 @@ describe('code() builder using Prism (incl generalized tests)', () => {
       { builders: [code()] },
     )
 
-    const langLine = templateBlock?.split('\n').find(i => i.includes('language-'))
-    expect(templateBlock.includes('language-bash'), `default fallback is "bash" but language line was:\n${langLine}`).toBeTruthy()
+    expect(templateBlock.includes('markdown')).toBeTruthy()
     expect(templateBlock.includes('language-xxx')).toBeFalsy()
   })
+
   it('the correct fallback is used when NO language is found', async () => {
     const { templateBlock } = await composeSfcBlocks(
       'test/fixtures/ts-code-block.md',
       await getFixture('no-language.md'),
       {
         builders: [code({
-          defaultLanguageForUnspecified: 'md',
+          defaultLanguageForUnspecified: 'markdown',
         })],
       },
     )
 
     const langLine = templateBlock?.split('\n').find(i => i.includes('language-markdown'))
-    expect(templateBlock.includes('language-bash'), `when no language is stated we configured to have it converted to 'md' but we got:\n${langLine}`).toBeTruthy()
+    expect(
+      templateBlock.includes('language-markdown'),
+      `when no language is stated we configured to have it converted to 'markdown' but we got:\n${langLine}`).toBeTruthy()
   })
   it('line numbers are displayed when set', async () => {
     const { templateBlock, html } = await composeSfcBlocks(
@@ -176,7 +184,7 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     )
 
     const highlighted = select(html).findAll('.highlight')
-    expect(highlighted, 'explict array elements are highlighted').toHaveLength(2)
+    expect(highlighted, 'explicit array elements are highlighted').toHaveLength(2)
     highlighted.forEach(el => expect(getClassList(el)).toContain('code-line'))
 
     const { html: html2 } = await composeSfcBlocks(
@@ -211,6 +219,36 @@ describe('code() builder using Prism (incl generalized tests)', () => {
 
     const pre = select(html).findFirst('pre', 'pre element not found!')
     expect(getStyle(pre)).toBe('text-color: green')
+  })
+
+  it('loading language parsers on demand works with Prism', () => {
+    const ts = getPrismGrammar('typescript', {} as CodeOptions)
+    expect(ts.langUsed).toBe('typescript')
+    expect(ts.grammar).toBeDefined()
+    expect(typeof ts.grammar).toBe('object')
+    expect(ts.grammar.comment).toBeDefined()
+
+    const rust = getPrismGrammar('rust', {} as CodeOptions)
+    expect(rust.langUsed).toBe('rust')
+    expect(rust.grammar).toBeDefined()
+    expect(typeof rust.grammar).toBe('object')
+    expect(rust.grammar.comment).toBeDefined()
+
+    const md = getPrismGrammar('markdown', {} as CodeOptions)
+    expect(md.langUsed).toBe('markdown')
+    expect(md.grammar).toBeDefined()
+    expect(typeof md.grammar).toBe('object')
+    expect(md.grammar.comment).toBeDefined()
+  })
+
+  it('getting a highlighter for an aliased language works', () => {
+    const ts = getPrismGrammar('ts', {} as CodeOptions)
+    expect(ts.langUsed).toBe('typescript')
+    expect(ts.grammar).toBeDefined()
+
+    const md = getPrismGrammar('md', {} as CodeOptions)
+    expect(md.langUsed).toBe('markdown')
+    expect(md.grammar).toBeDefined()
   })
 
   it('code content loaded from file using <<< syntax', async () => {
@@ -293,12 +331,24 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     expect(footer).not.toBeNull()
     expect(footer?.textContent).toBe('to be or not to be')
   })
-})
 
-describe('code() builder using Shiki', () => {
-  it.todo('switching to Shiki on basic template works as expected')
-  it.todo('Shiki works with light/dark mode')
-  it.todo('"unknown language" fallback is used when language stated but not matched', async () => {
+  it('having a code block results in inline styles are included', async () => {
+    const sfc = await composeFixture('multi-code-block', { builders: [code()] })
+    expect(sfc.vueStyleBlocks?.codeStyle).toBeDefined()
+    expect(sfc.component).toContain('.code-block')
+  })
+
+  it('no code block results in no in inline styles for code being being included', async () => {
+    const sfc = await composeFixture('simple', { builders: [code()] })
+    expect(sfc.vueStyleBlocks?.codeStyle).not.toBeDefined()
+  })
+
+  it('language is displayed when configured for it', async () => {
+    const sfc = await composeFixture('ts-code-block', {
+      builders: [code({ showLanguage: true })],
+    })
+    const display = select(sfc.html).findFirst('.lang-display', 'didn\'t find .lang-display node!')
+    expect(display.textContent).toBe('ts')
   })
 })
 

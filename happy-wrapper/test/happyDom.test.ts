@@ -138,14 +138,39 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(textNode.hasChildNodes()).toBeFalsy()
   })
 
-  it.skip('inline style API', () => {
+  it('inline style API', () => {
     const style = createInlineStyle()
       .addCssVariable('my-width', '45px')
       .addCssVariable('my-height', '65px')
-      .finish()
-    // console.log(style.textContent)
+      .addClassDefinition('.code-wrapper')
+      .addProps({
+        display: 'flex',
+        flexDirection: 'row',
+      })
+      .back()
 
-    console.log('style', toHtml(style))
+    const html = toHtml(style.finish())
+
+    expect(html).toContain('--my-width: 45px;')
+    expect(html).toContain('--my-height: 65px;')
+    expect(html, html).toContain('display: flex;')
+    expect(html, html).toContain('type="text/css"')
+
+    const vHtml = toHtml(style.convertToVueStyleBlock('css', true).finish())
+    expect(vHtml, vHtml).not.toContain('type="text/css"')
+    expect(vHtml, vHtml).toContain('lang="css"')
+  })
+
+  it('inline style with nested selectors', () => {
+    const style = createInlineStyle()
+      .addClassDefinition('.code-wrapper')
+      .addProps({ height: '99px' })
+      .addChild('.code-block', { display: 'flex' })
+      .addChild('.foobar', { width: '25px' })
+      .back()
+      .finish()
+
+    console.log(toHtml(style))
   })
 
   it('changeTag() utility works as expected with all container types', () => {

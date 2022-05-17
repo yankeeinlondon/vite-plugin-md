@@ -7,7 +7,7 @@ const name = 'home'
   <header class="page-heading fixed top-0 left-0 right-0 max-w-inherit bg-white dark:bg-gray-900 w-full z-10">
     <div class="px-4 py-1.5">
       <div class="border-b-gray-800 dark:border-b-gray-200 border-b-1 flex flex-row text-2xl items-center flex-grow space-x-4 ">
-        <span class="package flex flex-grow font-mono ">
+        <span class="package flex flex-grow font-mono">
           <a
             href="/"
             title="go home"
@@ -17,9 +17,9 @@ const name = 'home'
           </a>
         </span>
         <dark-mode />
-        <span class="npm-info flex" title="go to npm">
-          <a href="https://www.npmjs.com/package/vite-plugin-md">
-            <img src="https://img.shields.io/npm/v/vite-plugin-md?color=a1b858)" class="min-w-88px">
+        <span class="npm-info flex justify-center" title="go to npm">
+          <a href="https://www.npmjs.com/package/vite-plugin-md" class="flex">
+            <img src="https://img.shields.io/npm/v/vite-plugin-md?color=1c6b48)" class="min-w-88px">
           </a>
         </span>
       </div>

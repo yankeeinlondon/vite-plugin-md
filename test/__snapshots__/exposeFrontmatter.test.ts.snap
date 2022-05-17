@@ -1,7 +1,8 @@
 // Vitest Snapshot v1
 
 exports[`exposeFrontmatter snapshots > vue2 (no expose) 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\"><h1>My H1</h1>
 <p>lorem ipsum</p>
@@ -22,7 +23,8 @@ export default { data() { return { frontmatter } } }
 `;
 
 exports[`exposeFrontmatter snapshots > vue2 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\"><h1>My H1</h1>
 <p>lorem ipsum</p>
@@ -44,7 +46,8 @@ export default { data() { return { frontmatter } } }
 `;
 
 exports[`exposeFrontmatter snapshots > vue3 (no expose) 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\"><h1>My H1</h1>
 <p>lorem ipsum</p>
@@ -68,7 +71,8 @@ exports[`exposeFrontmatter snapshots > vue3 (no expose) 1`] = `
 `;
 
 exports[`exposeFrontmatter snapshots > vue3 1`] = `
-"
+"<route lang=\\"json\\">{}</route>
+
 <template>
   <div class=\\"markdown-body\\"><h1>My H1</h1>
 <p>lorem ipsum</p>

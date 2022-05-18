@@ -52,7 +52,7 @@ export const tabularFormatting = (p: Pipeline<PipelineStage.parser>, fence: Code
     s => s.updateAll('.code-line')(el =>
       pipe(
         el,
-        filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row'),
+        filterClasses(removed, /line-{1,2}[0-9]/, 'odd', 'even', 'first-row', 'last-row', 'highlight'),
         (el) => {
           const tr = pipe('<tr class="code-row">', createElement, addClass(misplaced))
           tr.append(clone(el))

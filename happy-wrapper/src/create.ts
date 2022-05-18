@@ -2,7 +2,6 @@ import { identity } from 'fp-ts/lib/function'
 import { Text, Window } from 'happy-dom'
 import { dasherize } from 'native-dash'
 import type { Document, DocumentFragment, IElement, IText } from 'happy-dom'
-import { string } from 'fp-ts'
 import { HappyMishap } from './errors'
 import type { Container, HTML } from './happy-types'
 import { isElement, isElementLike, isTextNodeLike } from './type-guards'
@@ -123,14 +122,12 @@ export interface ClassApi {
   addChild: (selector: string, defn: ClassDefn) => ClassApi
   /** add CSS prop/values */
   addProps: (defn: ClassDefn) => ClassApi
-  /** return to the InlineStyle API */
-  back: () => InlineStyle
 }
 
 export interface InlineStyle {
   /** add a single CSS variable (at a time); the CSS scope will ':root' unless specified */
   addCssVariable: (prop: string, value: string | number | boolean, scope?: string) => InlineStyle
-  addClassDefinition: (selection: string) => ClassApi
+  addClassDefinition: (selection: string, cb: ((api: ClassApi) => void)) => InlineStyle
   addCssVariables: (dictionary: Record<string, string>, scope?: string) => InlineStyle
   convertToVueStyleBlock: (lang: 'css' | 'scss', scoped: boolean) => InlineStyle
 
@@ -141,7 +138,7 @@ const renderClasses = (klasses: MultiClassDefn) => {
   return klasses.map(
     ([selector, defn]) => `\n\n  ${selector} {\n${Object.keys(defn).map(
       p => `    ${dasherize(p)}: ${defn[p]};`,
-    ).join('\n')}\n  }`)
+    ).join('\n')}\n  }`).join('\n')
 }
 
 /**
@@ -159,26 +156,24 @@ export const createInlineStyle = <T extends string = 'text/css'>(type: T = 'text
     addCssVariable(prop: string, value: string | number | boolean, scope = ':root') {
       if (!(scope in cssVariables))
         cssVariables[scope] = []
-
       cssVariables[scope].push({ prop: prop.replace(/^--/, ''), value })
 
       return api
     },
-    addClassDefinition(selector) {
-      return {
+    addClassDefinition(selector, cb) {
+      const classApi: ClassApi = {
         addChild: (child, defn) => {
           const childSelector = `${selector} ${child}`
           cssClasses.push([childSelector, defn])
-          return api.addClassDefinition(selector)
+          return classApi
         },
         addProps: (defn) => {
           cssClasses.push([selector, defn])
-          return api.addClassDefinition(selector)
-        },
-        back: () => {
-          return api
+          return classApi
         },
       }
+      cb(classApi)
+      return api
     },
     addCssVariables(dictionary: Record<string, string | number | boolean>, scope = ':root') {
       Object.keys(dictionary).forEach(p => api.addCssVariable(p, dictionary[p], scope))

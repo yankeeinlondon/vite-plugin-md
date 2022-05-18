@@ -3,6 +3,7 @@ import type MarkdownIt from 'markdown-it'
 import type { Pipeline, PipelineStage } from '../../../types'
 import type { CodeOptions } from '../code-types'
 import {
+  addClipboard,
   addLanguage,
   convertBlocksToDomNodes,
   defaultBlocks,
@@ -48,6 +49,7 @@ export const fence = async (payload: Pipeline<PipelineStage.parser>, options: Co
         userRules('after', payload, options),
 
         addLanguage(options),
+        addClipboard(payload, options),
         renderHtml(payload, options),
       )
 

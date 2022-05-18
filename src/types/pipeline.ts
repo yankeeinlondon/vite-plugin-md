@@ -188,7 +188,7 @@ export interface HeadProps {
   [key: string]: unknown
 }
 
-export interface HeadUtilityFunctions {
+export interface PipelineUtilityFunctions {
   /**
    * Adds a `<link>` to the page's header section
    */
@@ -197,6 +197,14 @@ export interface HeadUtilityFunctions {
    * Adds a `<script>` reference to the page's header section
    */
   addScriptReference: (script: ScriptProperty) => void
+
+  /**
+   * Allows the addition of code which will be brought into the
+   * `<script setup>` block if using VueJS 3.x and into a normal
+   * `<script>` block in VueJS2
+   */
+  addCodeBlock: (name: string, script: string, forVue2?: string[] | undefined) => void
+
   /**
    * Adds a `<style>` reference to the page's header section
    */
@@ -228,7 +236,7 @@ export type MetaExtracted<S extends IPipelineStage> = S extends 'initialize'
 
       excerpt?: string
 
-    } & HeadUtilityFunctions
+    } & PipelineUtilityFunctions
 
 export type HtmlContent<S extends IPipelineStage> = S extends 'parsed' | 'sfcBlocksExtracted' | 'closeout'
   ? {
@@ -313,6 +321,16 @@ export type Pipeline<S extends IPipelineStage> = {
    * into the SFC component at the appropriate time.
    */
   vueStyleBlocks: Record<string, IElement>
+
+  /**
+   * Provides a _named_ set of code blocks which will be injected into
+   * the VueJS's SFC's `<script setup>` section for Vue 3 and in a
+   * `<script>` block. All blocks will be setup for Typescript.
+   *
+   * Note: contributors may optionally include additional trailing lines
+   * for Vue2; this will allows you to export variables you've defined.
+   */
+  vueCodeBlocks: Record<string, string | [base: string, vue2Exports: string[]]>
 } & Parser<S> & MetaExtracted<S> & HtmlContent<S> & Blocks<S> & Completed<S>
 
 /**

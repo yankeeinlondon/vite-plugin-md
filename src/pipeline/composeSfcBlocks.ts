@@ -43,6 +43,7 @@ export async function composeSfcBlocks(id: string, raw: string, opts: Omit<Optio
     routeMeta: undefined,
     viteConfig: config,
     vueStyleBlocks: {},
+    vueCodeBlocks: {},
     codeBlockLanguages: {
       langsRequested: [],
       langsUsed: [],

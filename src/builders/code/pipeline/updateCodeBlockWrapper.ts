@@ -21,7 +21,7 @@ export const updateCodeBlockWrapper = (p: Pipeline<PipelineStage.parser>, o: Cod
         setAttribute('data-modifiers')(fence.modifiers?.join(',') || ''),
         o.lineNumbers || fence.modifiers.includes(Modifier['#'])
           ? addClass('line-numbers-mode')
-          : identity,
+          : addClass('no-line-numbers'),
         fence.externalFile
           ? addClass('external-ref')
           : identity,

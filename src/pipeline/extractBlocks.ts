@@ -7,7 +7,7 @@ import type {
   ResolvedOptions,
 } from '../types'
 
-const hashToArray = (hash?: Record<string, IElement>): IElement[] => hash
+const elementHashToArray = (hash?: Record<string, IElement>): IElement[] => hash
   ? Object.keys(hash).reduce(
     (acc, k) => {
       acc.push(hash[k])
@@ -16,6 +16,29 @@ const hashToArray = (hash?: Record<string, IElement>): IElement[] => hash
     [] as IElement[],
   )
   : []
+
+const codeBlocksToArray = (hash?: Record<string, string | [string, string[]]>): string[] => hash
+  ? Object.keys(hash).reduce(
+    (acc, k) => {
+      const val = hash[k]
+      acc.push(Array.isArray(val) ? val[0] : val)
+      return acc
+    },
+    [] as string[],
+  )
+  : []
+
+const createVue2ScriptBlock = (codeBlocks: Record<string, string | [base: string, vue2Exports: string[]]>) => {
+  const accumulatedExports: string[] = Object.keys(codeBlocks)
+    .flatMap(k => Array.isArray(codeBlocks[k]) ? codeBlocks[k][1] : [])
+    .filter(i => i)
+  const codeLines = Object.keys(codeBlocks).map(key => Array.isArray(codeBlocks[key])
+    ? codeBlocks[key][0]
+    : codeBlocks[key],
+  )
+
+  return `<script lang='ts'>\n${codeLines.join('\n')}\nexport { ${accumulatedExports.join(', ')} }\n`
+}
 
 /**
  * Finds any references to `<script>` blocks and extracts it
@@ -27,7 +50,7 @@ function extractScriptBlocks(html: HTML, p: Pipeline<PipelineStage.dom>) {
   const extractor = extract(scripts)
   html = select(html)
     .updateAll('script')(extractor)
-    .append(hashToArray(p.vueStyleBlocks))
+    .append(elementHashToArray(p.vueStyleBlocks))
     .toContainer()
 
   return { html, scripts: scripts.map(el => toHtml(el)) }
@@ -95,11 +118,13 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
     s => select(s).filterAll('script[setup]').toContainer(),
   ).filter(i => i).join('\n')
   /** all `<setup script>` blocks */
-  const scriptSetupBlocks = hoistScripts.scripts.map(
-    s => select(s)
+  const scriptSetupBlocks = hoistScripts.scripts
+    .map(
+      s => select(s)
       // unwrap the <script>...</script> tag and return only interior content
-      .mapAll('script[setup]')(el => el.innerHTML),
-  ).join('\n')
+        .mapAll('script[setup]')(el => el.innerHTML),
+    )
+    .join('\n')
   /** userland `<setup script>` import directives */
   const importDirectives: string[] = []
 
@@ -119,16 +144,20 @@ export const extractBlocks = transformer('extractBlocks', 'dom', 'sfcBlocksExtra
           templateBlocks.frontmatter,
           templateBlocks.vue2DataExport,
         ].join('\n')),
-        hoistScripts.scripts.join('\n'),
+        [
+          ...hoistScripts.scripts,
+          createVue2ScriptBlock(payload.vueCodeBlocks),
+        ].join('\n'),
       ].filter(i => i).join('\n')
     // Vue3
     : [
         wrap('script setup', [
-          importDirectives,
+          ...importDirectives,
           templateBlocks.useHead,
           templateBlocks.exposeFrontmatter,
           templateBlocks.localVariables,
           nonImportDirectives,
+          ...codeBlocksToArray(payload.vueCodeBlocks),
         ].filter(i => i).join('\n  ')),
         wrap('script', templateBlocks.frontmatter),
         regularScriptBlocks,

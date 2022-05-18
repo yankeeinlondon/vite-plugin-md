@@ -54,7 +54,7 @@ const config = defineConfig({
         }),
         link(),
         code({
-          theme: 'base',
+          theme: 'dracula',
           layoutStructure: 'tabular',
         }),
       ],

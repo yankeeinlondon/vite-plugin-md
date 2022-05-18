@@ -1,6 +1,8 @@
 ---
 title: Hello
 description: "home page to example app"
+route:
+  - howdy: doody
 ---
 
 <route lang="yaml">
@@ -42,11 +44,11 @@ The frontmatter for this page is:
 {{ frontmatter }}
 ```
 
-> **Note:** while it is represented above as a JSON structure; that's mainly because we were showing off how you can reference your own frontmatter props as code blocks. Note that the `requireAuth` property is not set in the page text but rather _configured_ as a default value.
+> **Note:** while it is represented above as a JSON structure; that's mainly because we were showing off how you can reference your own frontmatter props as code blocks. Note, however, that the `requireAuth` property is not set in the page text but rather _configured_ as a default value.
 
 Of course a normal page would use just then standard YAML syntax at the top of the file:
 
-```md
+```#md
 ---
 title: "Welcome Earthling"
 etc: "..."

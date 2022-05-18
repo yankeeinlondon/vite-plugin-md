@@ -1,6 +1,6 @@
 import type { Fragment } from 'happy-wrapper'
 import type { Grammar } from 'prismjs'
-import type { Pipeline, PipelineStage } from '../../types'
+import type { IPipelineStage, Pipeline, PipelineStage } from '../../types'
 import type { CodeColorTheme } from './styles/color/color-types'
 
 export type HTML = string
@@ -22,10 +22,9 @@ export type LineCallback = (
  * A callback for a block node which provides build-time capability to
  * modify a property with a callback
  */
-export type BlockCallback<T> = (fence: CodeBlockMeta<'code'>, filename: string, frontmatter: Pipeline<PipelineStage.parser>['frontmatter']) => T
+export type BlockCallback<T> = <S extends CodeParsingStage>(fence: CodeBlockMeta<S>, filename: string, frontmatter: Pipeline<PipelineStage.parser>['frontmatter']) => T
 
 export interface CodeOptions {
-  plugins: string[]
   /**
    * The language to use for code blocks that specify a language that Prism does not know.
    *
@@ -122,13 +121,31 @@ export interface CodeOptions {
   highlightLines: boolean | BlockCallback<boolean>
 
   /**
-   * Add a `<span>` element to the heading row which copies the code to the clipboard
+   * Adds a clipboard icon to the header row and injects the functionality to
+   * copy code block contents to the clipboard.
    *
    * @default false
    */
   clipboard: boolean | BlockCallback<boolean>
 
-  theme?: 'base' | 'lighting' | 'material' | CodeColorTheme<any>
+  /**
+   * The `copyToClipboard()` and `clipboardAvailable()` functions are automatically
+   * added to pages which have a code block on the page which requests this functionality
+   * but you can also just ask for it to be included in call pages so you can use these
+   * functions for your own evil plans.
+   */
+  provideClipboardFunctionality: boolean | BlockCallback<boolean>
+
+  theme?: 'base' | 'lighting' | 'material' | 'dracula' | CodeColorTheme<any>
+
+  /**
+   * By default light mode has code blocks with light backgrounds, and dark mode with
+   * dark backgrounds. If you want to _invert_ that you can by setting this property to
+   * true.
+   *
+   * @default false
+   */
+  invertColorMode?: boolean
 
   /**
    * Should you want to add your own language grammar you can:

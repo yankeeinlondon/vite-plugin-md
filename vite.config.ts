@@ -15,7 +15,7 @@ export default defineConfig(() => ({
       extensions: ['vue', 'md'],
     }),
     Layouts(),
-    Markdown({ builders: [link(), meta(), code()] }),
+    Markdown({ builders: [link(), meta(), code({ theme: 'lighting' })] }),
     Vue({
       include: [/\.vue$/, /\.md$/],
       reactivityTransform: true,

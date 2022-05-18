@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { IElement } from '../src'
 import {
   addClass,
+  addVueEvent,
   after,
   before,
   changeTagName,
@@ -142,12 +143,12 @@ describe('HappyDom\'s can be idempotent', () => {
     const style = createInlineStyle()
       .addCssVariable('my-width', '45px')
       .addCssVariable('my-height', '65px')
-      .addClassDefinition('.code-wrapper')
-      .addProps({
-        display: 'flex',
-        flexDirection: 'row',
-      })
-      .back()
+      .addClassDefinition('.code-wrapper', c => c
+        .addProps({
+          display: 'flex',
+          flexDirection: 'row',
+        }),
+      )
 
     const html = toHtml(style.finish())
 
@@ -163,14 +164,17 @@ describe('HappyDom\'s can be idempotent', () => {
 
   it('inline style with nested selectors', () => {
     const style = createInlineStyle()
-      .addClassDefinition('.code-wrapper')
-      .addProps({ height: '99px' })
-      .addChild('.code-block', { display: 'flex' })
-      .addChild('.foobar', { width: '25px' })
-      .back()
+      .addClassDefinition('.code-wrapper', c => c
+        .addProps({ height: '99px' })
+        .addChild('.code-block', { display: 'flex' })
+        .addChild('.foobar', { width: '25px' }),
+      )
       .finish()
 
-    console.log(toHtml(style))
+    const html = toHtml(style)
+    expect(html).toContain('.code-wrapper {')
+    expect(html).toContain('.code-wrapper .code-block {')
+    expect(html).toContain('.code-wrapper .foobar {')
   })
 
   it('changeTag() utility works as expected with all container types', () => {
@@ -619,5 +623,17 @@ describe('HappyDom\'s can be idempotent', () => {
     expect(safeString(t2)).toBe('hi there')
     expect(safeString(t3)).toBe(t3)
     expect(safeString(t4)).toBe('hi there')
+  })
+
+  it('addVueEvent() adds an appropriate v-bind attribute', () => {
+    const html = '<my-component>hello world</my-component>'
+    const eventful = addVueEvent('onClick', 'doit()')(html)
+    expect(eventful, eventful).toContain('v-bind="{')
+    expect(eventful, eventful).toContain('doit()')
+
+    const el = createElement(html)
+    const eventful2 = addVueEvent('onClick', 'doit()')(el)
+    expect(toHtml(eventful2), toHtml(eventful2)).toContain('v-bind="{')
+    expect(toHtml(eventful2), toHtml(eventful2)).toContain('doit()')
   })
 })

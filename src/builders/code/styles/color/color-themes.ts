@@ -19,6 +19,8 @@ export const baseLight: CodeColorTheme<Color> = {
   decorator: '#bd8f8f',
   regex: '#ab5e3f',
   jsonProperty: '#698c96',
+
+  lineHighlightBackground: 'hsla(0, 0%, 33%, 0.25)',
 }
 
 export const dracula: CodeColorTheme<Color> = {
@@ -54,6 +56,8 @@ export const dracula: CodeColorTheme<Color> = {
 
   regex: '#ffb86c',
   important: '#ffb86c',
+
+  lineHighlightBackground: 'hsla(0, 0%, 33%, 0.25)',
 }
 
 export const darcula: CodeColorTheme<Color> = {
@@ -80,6 +84,8 @@ export const darcula: CodeColorTheme<Color> = {
 
   namespace: '#b05a78',
   decorator: '#bd8f8f',
+
+  lineHighlightBackground: 'hsla(0, 0%, 33%, 0.25)',
 }
 
 export const material: CodeColorTheme<ColorByMode> = {
@@ -123,6 +129,8 @@ export const material: CodeColorTheme<ColorByMode> = {
   unit: ['#f76d47', '#fd9170'],
   url: ['#e53935', '#ff6666'],
   variable: ['#e53935', '#ff6666'],
+
+  lineHighlightBackground: ['hsla(0, 0%, 33%, 0.25)', 'hsla(0, 0%, 33%, 0.25)'],
 }
 
 export const solarizedLight: CodeColorTheme<Color> = {
@@ -160,10 +168,11 @@ export const solarizedLight: CodeColorTheme<Color> = {
   important: '#cb4b16', // bold
   variable: '#cb4b16',
 
+  lineHighlightBackground: 'hsla(0, 0%, 33%, 0.25)',
 }
 
 export const twilight: CodeColorTheme<Color> = {
-  foreground: '',
+  foreground: '#fdf6e3',
   background: 'hsl(200, 4%, 16%)',
 
   textSelectionBackground: 'hsla(0, 0%, 93%, 0.15)',
@@ -260,7 +269,7 @@ export const tomorrow: CodeColorTheme<Color> = {
 
 export const themes: Record<string, CodeColorTheme<ColorByMode>> = {
   base: mergeColorThemes(baseLight, darcula),
-  dracula: mergeColorThemes(dracula, darcula),
-  lighting: mergeColorThemes(twilight, tomorrow),
+  dracula: mergeColorThemes(darcula, dracula),
+  lighting: mergeColorThemes(twilight, solarizedLight),
   material,
 }

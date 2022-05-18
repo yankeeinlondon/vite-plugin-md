@@ -1,4 +1,5 @@
 export * from './addLanguage'
+export * from './addClipboard'
 export * from './convertBlocksToDomNodes'
 export * from './defaultBlocks'
 export * from './extractMarkdownItTokens'

@@ -362,6 +362,22 @@ describe('code() builder using Prism (incl generalized tests)', () => {
     expect(styles.length).toBe(1)
     // TODO: need to find way to compile SFC so this test can be more end-to-end
   })
+
+  it('whitespace at start of line is represented in final markup', async () => {
+    const sfc = await composeFixture('ts-code-indented', { builders: [code()] })
+    const line2 = select(sfc.html).findFirst('.line-2', 'couldn\'t find line 2')
+    const line3 = select(sfc.html).findFirst('.line-3', 'couldn\'t find line 3')
+    expect(line2.textContent.startsWith('  ')).toBeTruthy()
+    expect(line3.textContent.startsWith('    ')).toBeTruthy()
+
+    const sfc2 = await composeFixture('ts-code-indented', { builders: [code({ layoutStructure: 'tabular' })] })
+    const line22 = select(sfc2.html).findFirst('.line-2', 'couldn\'t find line 2')
+    const line23 = select(sfc2.html).findFirst('.line-3', 'couldn\'t find line 3')
+    expect(line22.textContent.startsWith('  ')).toBeTruthy()
+    expect(line23.textContent.startsWith('    ')).toBeTruthy()
+  })
+
+  it.todo('the raw code is captured and available to clipboard operation')
 })
 
 describe('table format for code blocks', () => {

@@ -7,7 +7,7 @@ Markdown for Vite
 
 [![NPM version](https://img.shields.io/npm/v/vite-plugin-md?color=a1b858)](https://www.npmjs.com/package/vite-plugin-md)
 
-> ℹ️ **0.2.x is for Vite 2 and 0.1.x is for Vite 1**
+> From v0.13, we introduced a pipline and builder engine ([#54](https://github.com/antfu/vite-plugin-md/pull/54), [#77](https://github.com/antfu/vite-plugin-md/pull/77)) to provide full customizability. If you still prefer the simple Markdown-to-Vue transformation prior to v0.13, it has been moved to [`vite-plugin-vue-markdown`](https://github.com/antfu/vite-plugin-vue-markdown).
 
 ## Install
 
@@ -105,6 +105,8 @@ import { Counter } from './Counter.vue'
 ```
 
 Or you can use [`vite-plugin-components`](#work-with-vite-plugin-components) for auto components registration.
+
+Please pay attention to the name of the component. `kebab-case` is recommended because it meets the standard.
 
 ## Frontmatter
 
